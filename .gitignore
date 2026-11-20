@@ -1,0 +1,59 @@
+# Build outputs. The factory is cloned into other repos; a committed CMakeCache.txt
+# carries absolute paths from whichever machine built it and breaks the next one.
+/.cache/
+.cmake_build*/
+build/
+dist/
+node_modules/
+
+# Shared editor settings
+!.vscode/
+.vscode/*
+!.vscode/settings.json
+
+# Test and tool droppings
+.pytest_cache/
+__pycache__/
+*.pyc
+docs/operations/readiness/workflow-causes.json.lock
+coverage/
+# SRV-FIX-460 · the suite needs a fixture root outside every path a lane's confinement makes
+# writable, and inside a lane the only such place is this checkout. Ignored so a run of the suite
+# never becomes part of a commit.
+.pytest-tmp*/
+
+# Whatever the factory is pointed at is not the factory
+.factory/state/
+
+# What an instance pointed at THIS directory writes into it (SPEC.md §2, "What the tool writes").
+# FAC-FEAT-244 added `.factory/factory.json` here so the factory's own tickets keep a tool that can
+# see them, after the product's manifest stopped declaring this repository.
+#
+# Deny by default and name what is POLICY, the same shape the root .gitignore uses: a lane's
+# checkout, a run's log and the ids handed out are scratch, and the next thing the tool learns to
+# write is scratch too until somebody says otherwise.
+.factory/*
+!.factory/factory.json
+!.factory/permissions.json
+!.factory/prompts/
+
+# A QA session's stdout. The verdict it writes is committed; this is the noise around it.
+docs/reports/*-qa*.log
+
+# tsc -b incremental state. Build output, and it changes on every machine that builds.
+*.tsbuildinfo
+
+# The browser gate's own droppings — the server and preview logs of a run, and the shots when it
+# is pointed at a scratch directory. The run a gate was DECIDED on is copied into
+# docs/reports/<ticket-id>/ and committed; this is the noise around it.
+client/web/gate/shots/
+client/web/gate/.work-*/
+client/web/gate/.work/
+client/web/gate/.tmp/
+client/web/gate/.tier3-*/
+client/web/gate/GATE_BREAK
+client/web/gate/*.log
+
+# vite dep-optimiser scratch, which lands beside the workspace it was run from
+.vite/
+.worktrees/
