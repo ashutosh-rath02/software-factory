@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLOG REQUIRED libglog)
@@ -29,7 +29,7 @@ target_compile_definitions(factory-server PRIVATE
 )
 
 target_link_libraries(factory-server PRIVATE
-    Boost::system
+    Boost::headers
     OpenSSL::Crypto
     ${GLOG_LIBRARIES}
     pthread
