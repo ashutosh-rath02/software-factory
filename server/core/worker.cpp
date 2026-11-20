@@ -11,7 +11,7 @@ void core::Worker::init()
 
 void core::Worker::start()
 {
-    work_ = std::make_unique<boost::asio::io_context::work>(workerIo_);
+    work_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(workerIo_.get_executor());
     for (std::size_t i = 0; i < poolSize_; ++i) {
         threads_.emplace_back([this] {
             while (true) {

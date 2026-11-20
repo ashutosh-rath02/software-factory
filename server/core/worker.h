@@ -33,7 +33,7 @@ private:
     boost::asio::io_context workerIo_;
     boost::asio::strand<boost::asio::io_context::executor_type> serialStrand_{
         boost::asio::make_strand(workerIo_)};
-    std::unique_ptr<boost::asio::io_context::work> work_;
+    std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_;
     std::vector<std::thread> threads_;
     std::size_t poolSize_ = 2;
 };
