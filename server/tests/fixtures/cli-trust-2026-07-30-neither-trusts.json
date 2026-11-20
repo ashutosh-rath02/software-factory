@@ -1,0 +1,46 @@
+{
+  "capture": "neither-trusts",
+  "date": "2026-07-30",
+  "note": "control: which file does the CLI name when there is no redirection?",
+  "cli_version": "2.1.220 (Claude Code)",
+  "argv": [
+    "/home/dev/.local/bin/claude",
+    "--print",
+    "--input-format",
+    "stream-json",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ],
+  "cwd": "/tmp/har047-trust-_r46z1ah/workspace",
+  "env": {
+    "HOME": "/tmp/har047-trust-_r46z1ah/home-blank",
+    "CLAUDE_CONFIG_DIR": null
+  },
+  "stdin": "NOT JSON\n",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/home-blank/.claude.json.\nIgnoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/home-blank/.claude.json.\nError parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\"\n",
+  "stderr_lines": [
+    "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/home-blank/.claude.json.",
+    "Ignoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/home-blank/.claude.json.",
+    "Error parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\""
+  ],
+  "ignoring_lines": [
+    "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/home-blank/.claude.json.",
+    "Ignoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/home-blank/.claude.json."
+  ],
+  "watched_files": {
+    "home_config": "/tmp/har047-trust-_r46z1ah/home-blank/.claude.json",
+    "config_dir_config": null
+  },
+  "sha256_before": {
+    "home_config": "712046fe6e08a225d672dacd04308ed70a0130b0e6800d70123e2ac4a93c682f"
+  },
+  "sha256_after": {
+    "home_config": "49483e91b52ad38f960589755e16264bb11c31e1071d262a299bcb7818099717"
+  },
+  "files_the_cli_modified": [
+    "home_config"
+  ]
+}

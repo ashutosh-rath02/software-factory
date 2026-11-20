@@ -1,0 +1,48 @@
+{
+  "capture": "this-repository-as-the-manifest-runs-it",
+  "date": "2026-07-30",
+  "note": "the reported defect, reproduced: cwd is this repository, CLAUDE_CONFIG_DIR is the manifest's agent.credentials_dir.",
+  "cli_version": "2.1.220 (Claude Code)",
+  "argv": [
+    "/home/dev/.local/bin/claude",
+    "--print",
+    "--input-format",
+    "stream-json",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ],
+  "cwd": "/home/dev/software-factory/.claude/worktrees/agent-a45868f367659053f",
+  "env": {
+    "HOME": "/home/dev",
+    "CLAUDE_CONFIG_DIR": "/home/dev/.claude"
+  },
+  "stdin": "NOT JSON\n",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "Ignoring 107 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/home/dev/software-factory\"].hasTrustDialogAccepted: true in /home/dev/.claude/.claude.json.\nIgnoring 7 permissions.additionalDirectories entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/home/dev/software-factory\"].hasTrustDialogAccepted: true in /home/dev/.claude/.claude.json.\nError parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\"\n",
+  "stderr_lines": [
+    "Ignoring 107 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/home/dev/software-factory\"].hasTrustDialogAccepted: true in /home/dev/.claude/.claude.json.",
+    "Ignoring 7 permissions.additionalDirectories entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/home/dev/software-factory\"].hasTrustDialogAccepted: true in /home/dev/.claude/.claude.json.",
+    "Error parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\""
+  ],
+  "ignoring_lines": [
+    "Ignoring 107 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/home/dev/software-factory\"].hasTrustDialogAccepted: true in /home/dev/.claude/.claude.json.",
+    "Ignoring 7 permissions.additionalDirectories entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/home/dev/software-factory\"].hasTrustDialogAccepted: true in /home/dev/.claude/.claude.json."
+  ],
+  "watched_files": {
+    "home_config": "/home/dev/.claude.json",
+    "config_dir_config": "/home/dev/.claude/.claude.json"
+  },
+  "sha256_before": {
+    "home_config": "c709c439da48666dc9f6f8a391d1580c820f7d777cf921305bae1dab7ba15c90",
+    "config_dir_config": "57212610f7811f64d7dd2dfea624cb962b8143ed7ed3ebd9926978d5e3ff4d11"
+  },
+  "sha256_after": {
+    "home_config": "c709c439da48666dc9f6f8a391d1580c820f7d777cf921305bae1dab7ba15c90",
+    "config_dir_config": "e93d9c5ca4a30a277b1f93d1aa5e00796e747d645901afca847ba8b84bf903d4"
+  },
+  "files_the_cli_modified": [
+    "config_dir_config"
+  ]
+}

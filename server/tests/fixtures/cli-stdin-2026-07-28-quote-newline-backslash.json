@@ -1,0 +1,31 @@
+{
+ "cli_version": "2.1.92 (Claude Code)",
+ "captured": "2026-07-28",
+ "argv_tail": [
+  "--print",
+  "--input-format",
+  "stream-json",
+  "--output-format",
+  "stream-json",
+  "--verbose"
+ ],
+ "stdin": [
+  "{\"type\": \"user\", \"message\": {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"reply with exactly this and nothing else: he said \\\"hi\\\"\\\\done\"}]}}"
+ ],
+ "rc": 0,
+ "timed_out": false,
+ "took_s": 6.9,
+ "stderr": "",
+ "frame_types": [
+  "assistant",
+  "rate_limit_event",
+  "result",
+  "system"
+ ],
+ "frames": 4,
+ "unparseable": [],
+ "results": [
+  "he said \"hi\"\\done"
+ ],
+ "user_frames": []
+}

@@ -1,0 +1,20 @@
+{
+ "cli_version": "2.1.266 (Claude Code)",
+ "captured": "2026-09-11",
+ "what": "`.claude/scripts/review.sh` running the real CLI over a real diff that violates two of docs/REVIEW.md's passes",
+ "argv_tail": [
+  "--model",
+  "claude-opus-5",
+  "-p"
+ ],
+ "stdin_bytes": 6341,
+ "stdin_head": "# REVIEW — what a review of this repository reads, and how it ranks what it finds\n\n`REVIEW` is the seventh stage of both stage sequences, and since `SRV-FEAT-500` it is a **command\nthe tool runs**: each workspace declares one beside its `build` and its `gate`, `E19` starts it in\nthe lane, and its output arrives on `/ws` as `command` frames like any other. This file is the\ncommand's instructions — ",
+ "rc": 0,
+ "stdout": "blocker app/store.cpp:5 a `std::mutex` is introduced into event-driven code, where state shared between handlers must be serialised by a strand rather than a lock.\nblocker app/store.cpp:9 `note` takes a blocking lock on the handler thread, so a contended call blocks a handler instead of deferring the work.\nminor app/store.cpp:1 the commit changes the `store` module without updating its design note (`server/design/store.md`), which must accompany the change in the same commit.\n",
+ "stderr": "",
+ "finding_lines": [
+  "blocker app/store.cpp:5 a `std::mutex` is introduced into event-driven code, where state shared between handlers must be serialised by a strand rather than a lock.",
+  "blocker app/store.cpp:9 `note` takes a blocking lock on the handler thread, so a contended call blocks a handler instead of deferring the work.",
+  "minor app/store.cpp:1 the commit changes the `store` module without updating its design note (`server/design/store.md`), which must accompany the change in the same commit."
+ ]
+}

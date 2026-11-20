@@ -1,0 +1,43 @@
+{
+  "capture": "config-dir-carries-the-trust",
+  "date": "2026-07-30",
+  "note": "the trust written where the CLI reads it.",
+  "cli_version": "2.1.220 (Claude Code)",
+  "argv": [
+    "/home/dev/.local/bin/claude",
+    "--print",
+    "--input-format",
+    "stream-json",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ],
+  "cwd": "/tmp/har047-trust-_r46z1ah/workspace",
+  "env": {
+    "HOME": "/tmp/har047-trust-_r46z1ah/home-trusting",
+    "CLAUDE_CONFIG_DIR": "/tmp/har047-trust-_r46z1ah/config-trusting"
+  },
+  "stdin": "NOT JSON\n",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "Error parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\"\n",
+  "stderr_lines": [
+    "Error parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\""
+  ],
+  "ignoring_lines": [],
+  "watched_files": {
+    "home_config": "/tmp/har047-trust-_r46z1ah/home-trusting/.claude.json",
+    "config_dir_config": "/tmp/har047-trust-_r46z1ah/config-trusting/.claude.json"
+  },
+  "sha256_before": {
+    "home_config": "11b22008048d1bf8932bf8f37c3e0310c2c3986b42045e0d3c1df706b2c26d5b",
+    "config_dir_config": "ba26889b10eb2f55987c62e946ff389d5dff49cdc4a23a461af012047a516e94"
+  },
+  "sha256_after": {
+    "home_config": "11b22008048d1bf8932bf8f37c3e0310c2c3986b42045e0d3c1df706b2c26d5b",
+    "config_dir_config": "8316b279646db24d3b7cedb9cf6fb455ee1b11ee0ed63da3433c534ce872d8d5"
+  },
+  "files_the_cli_modified": [
+    "config_dir_config"
+  ]
+}

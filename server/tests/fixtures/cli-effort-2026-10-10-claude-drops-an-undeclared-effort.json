@@ -1,0 +1,48 @@
+{
+ "captured": "2026-10-10T05:27:44.484527+00:00",
+ "cli_version": "2.1.272 (Claude Code)",
+ "fixture_verified": true,
+ "flag": "--effort",
+ "help_lines": [
+  "--effort <level>                      Effort level for the current session"
+ ],
+ "probes": {
+  "declared value": {
+   "argv": [
+    "/factory/bin/claude",
+    "--effort",
+    "high",
+    "--version"
+   ],
+   "exit": 0,
+   "stderr": "",
+   "stdout": "2.1.272 (Claude Code)\n"
+  },
+  "empty value": {
+   "argv": [
+    "/factory/bin/claude",
+    "--effort",
+    "",
+    "--version"
+   ],
+   "exit": 0,
+   "stderr": "Warning: Unknown --effort value '' \u2014 ignoring it and using the default effort. Valid values: low, medium, high, xhigh, max.\n",
+   "stdout": "2.1.272 (Claude Code)\n"
+  },
+  "undeclared value": {
+   "argv": [
+    "/factory/bin/claude",
+    "--effort",
+    "bogus",
+    "--version"
+   ],
+   "exit": 0,
+   "stderr": "Warning: Unknown --effort value 'bogus' \u2014 ignoring it and using the default effort. Valid values: low, medium, high, xhigh, max.\n",
+   "stdout": "2.1.272 (Claude Code)\n"
+  }
+ },
+ "program": "/factory/bin/claude",
+ "purpose": "what the real claude CLI accepts as --effort, and what it does with a value the manifest never declared; no repository content and no model call",
+ "refuses_an_undeclared_value": false,
+ "warns_and_defaults_instead": true
+}

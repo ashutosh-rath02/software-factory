@@ -1,0 +1,38 @@
+{
+ "cli_version": "2.1.92 (Claude Code)",
+ "captured": "2026-07-28",
+ "argv_tail": [
+  "--print",
+  "--input-format",
+  "stream-json",
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--replay-user-messages"
+ ],
+ "stdin": [
+  "{\"type\": \"user\", \"message\": {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"say only the word one\"}]}}",
+  "{\"type\": \"user\", \"message\": {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"say only the word two\"}]}}"
+ ],
+ "rc": 0,
+ "timed_out": false,
+ "took_s": 12.8,
+ "stderr": "",
+ "frame_types": [
+  "assistant",
+  "rate_limit_event",
+  "result",
+  "system",
+  "user"
+ ],
+ "frames": 9,
+ "unparseable": [],
+ "results": [
+  "one",
+  "two"
+ ],
+ "user_frames": [
+  "say only the word one",
+  "say only the word two"
+ ]
+}

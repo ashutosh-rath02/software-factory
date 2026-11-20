@@ -1,0 +1,25 @@
+{
+ "cli_version": "2.1.92 (Claude Code)",
+ "captured": "2026-07-28",
+ "argv_tail": [
+  "--print",
+  "--input-format",
+  "stream-json",
+  "--output-format",
+  "stream-json",
+  "--verbose"
+ ],
+ "stdin": [
+  "say only the word one",
+  "{\"type\": \"user\", \"message\": {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"say only the word two\"}]}}"
+ ],
+ "rc": 1,
+ "timed_out": false,
+ "took_s": 12.3,
+ "stderr": "Error parsing streaming input line: say only the word one: SyntaxError: JSON Parse error: Unexpected identifier \"say\"",
+ "frame_types": [],
+ "frames": 0,
+ "unparseable": [],
+ "results": [],
+ "user_frames": []
+}

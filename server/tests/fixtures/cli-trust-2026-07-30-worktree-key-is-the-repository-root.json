@@ -1,0 +1,51 @@
+{
+  "capture": "worktree-key-is-the-repository-root",
+  "date": "2026-07-30",
+  "note": "the repository's own root: the key is the root.",
+  "cli_version": "2.1.220 (Claude Code)",
+  "argv": [
+    "/home/dev/.local/bin/claude",
+    "--print",
+    "--input-format",
+    "stream-json",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ],
+  "cwd": "/tmp/har047-wt-yjpry9av/repo",
+  "env": {
+    "HOME": "/tmp/har047-wt-yjpry9av/wt-home",
+    "CLAUDE_CONFIG_DIR": "/tmp/har047-wt-yjpry9av/wt-config"
+  },
+  "stdin": "NOT JSON\n",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-wt-yjpry9av/repo\"].hasTrustDialogAccepted: true in /tmp/har047-wt-yjpry9av/wt-config/.claude.json.\nIgnoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-wt-yjpry9av/repo\"].hasTrustDialogAccepted: true in /tmp/har047-wt-yjpry9av/wt-config/.claude.json.\nError parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\"\n",
+  "stderr_lines": [
+    "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-wt-yjpry9av/repo\"].hasTrustDialogAccepted: true in /tmp/har047-wt-yjpry9av/wt-config/.claude.json.",
+    "Ignoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-wt-yjpry9av/repo\"].hasTrustDialogAccepted: true in /tmp/har047-wt-yjpry9av/wt-config/.claude.json.",
+    "Error parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\""
+  ],
+  "ignoring_lines": [
+    "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-wt-yjpry9av/repo\"].hasTrustDialogAccepted: true in /tmp/har047-wt-yjpry9av/wt-config/.claude.json.",
+    "Ignoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-wt-yjpry9av/repo\"].hasTrustDialogAccepted: true in /tmp/har047-wt-yjpry9av/wt-config/.claude.json."
+  ],
+  "watched_files": {
+    "home_config": "/tmp/har047-wt-yjpry9av/wt-home/.claude.json",
+    "config_dir_config": "/tmp/har047-wt-yjpry9av/wt-config/.claude.json"
+  },
+  "sha256_before": {
+    "home_config": "712046fe6e08a225d672dacd04308ed70a0130b0e6800d70123e2ac4a93c682f",
+    "config_dir_config": "712046fe6e08a225d672dacd04308ed70a0130b0e6800d70123e2ac4a93c682f"
+  },
+  "sha256_after": {
+    "home_config": "712046fe6e08a225d672dacd04308ed70a0130b0e6800d70123e2ac4a93c682f",
+    "config_dir_config": "eb6beb3d481286ebc9f191650631b0e5ad31067c0dafbb410bb896f1b006807b"
+  },
+  "files_the_cli_modified": [
+    "config_dir_config"
+  ],
+  "cwd_is_the_repository_root": true,
+  "repository_root": "/tmp/har047-wt-yjpry9av/repo",
+  "key_the_cli_named": "/tmp/har047-wt-yjpry9av/repo"
+}

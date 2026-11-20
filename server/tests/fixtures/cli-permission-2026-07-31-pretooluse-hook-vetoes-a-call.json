@@ -1,0 +1,84 @@
+{
+ "cli_version": "2.1.220",
+ "captured": "2026-07-31",
+ "what": "Does a PreToolUse hook in --settings give an external supervisor a veto over a tool call, under --print --input-format stream-json?",
+ "answer": "YES. The hook is exec'd, receives the call on stdin, and its permissionDecision is obeyed.",
+ "argv_tail": [
+  "--print",
+  "--input-format",
+  "stream-json",
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--permission-mode",
+  "auto",
+  "--settings",
+  "<file>",
+  "--session-id",
+  "<uuid>"
+ ],
+ "settings": {
+  "hooks": {
+   "PreToolUse": [
+    {
+     "matcher": "Bash",
+     "hooks": [
+      {
+       "type": "command",
+       "command": "/tmp/claude-1000/-home-dev-PLV-software-factory/62d09614-381f-4c22-a0a9-b31d7353ce3d/scratchpad/perm-probe/hook.sh"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "hook_stdin_keys": [
+  "cwd",
+  "effort",
+  "hook_event_name",
+  "permission_mode",
+  "prompt_id",
+  "session_id",
+  "tool_input",
+  "tool_name",
+  "tool_use_id",
+  "transcript_path"
+ ],
+ "hook_stdin_sample": {
+  "permission_mode": "auto",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+   "command": "echo HELLO-FROM-BASH",
+   "description": "Echo a test string"
+  }
+ },
+ "hook_stdout": {
+  "hookSpecificOutput": {
+   "hookEventName": "PreToolUse",
+   "permissionDecision": "deny",
+   "permissionDecisionReason": "the factory says no"
+  }
+ },
+ "rc": 0,
+ "tool_result": {
+  "is_error": true,
+  "content": "the factory says no"
+ },
+ "permission_denials": [
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_01TU4MqYH2neR9cEYEKQYAcm",
+   "tool_input": {
+    "command": "echo HELLO-FROM-BASH",
+    "description": "Echo a test string"
+   }
+  }
+ ],
+ "result_is_error": false,
+ "settings_are_read_from_CLAUDE_CONFIG_DIR": {
+  "question": "Does the CLI load settings.json out of CLAUDE_CONFIG_DIR, with no --settings flag?",
+  "answer": "YES. Same hook, same deny, with HOME=/nonexistent and only CLAUDE_CONFIG_DIR set.",
+  "why_it_matters": "the lane's configuration directory is already the tool's to seed (SRV-FIX-052), so the channel needs no new argv and launch::build learns nothing about a path only `lane` knows"
+ }
+}

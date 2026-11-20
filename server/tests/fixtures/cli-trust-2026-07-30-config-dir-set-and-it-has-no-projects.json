@@ -1,0 +1,48 @@
+{
+  "capture": "config-dir-set-and-it-has-no-projects",
+  "date": "2026-07-30",
+  "note": "THE DECIDER. $HOME/.claude.json trusts this workspace and $CLAUDE_CONFIG_DIR/.claude.json does not. A fallback to $HOME would be quiet here.",
+  "cli_version": "2.1.220 (Claude Code)",
+  "argv": [
+    "/home/dev/.local/bin/claude",
+    "--print",
+    "--input-format",
+    "stream-json",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ],
+  "cwd": "/tmp/har047-trust-_r46z1ah/workspace",
+  "env": {
+    "HOME": "/tmp/har047-trust-_r46z1ah/home-trusting",
+    "CLAUDE_CONFIG_DIR": "/tmp/har047-trust-_r46z1ah/config-blank"
+  },
+  "stdin": "NOT JSON\n",
+  "rc": 1,
+  "stdout": "",
+  "stderr": "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/config-blank/.claude.json.\nIgnoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/config-blank/.claude.json.\nError parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\"\n",
+  "stderr_lines": [
+    "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/config-blank/.claude.json.",
+    "Ignoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/config-blank/.claude.json.",
+    "Error parsing streaming input line: NOT JSON: SyntaxError: JSON Parse error: Unexpected identifier \"NOT\""
+  ],
+  "ignoring_lines": [
+    "Ignoring 2 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/config-blank/.claude.json.",
+    "Ignoring 1 permissions.additionalDirectories entry from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"/tmp/har047-trust-_r46z1ah/workspace\"].hasTrustDialogAccepted: true in /tmp/har047-trust-_r46z1ah/config-blank/.claude.json."
+  ],
+  "watched_files": {
+    "home_config": "/tmp/har047-trust-_r46z1ah/home-trusting/.claude.json",
+    "config_dir_config": "/tmp/har047-trust-_r46z1ah/config-blank/.claude.json"
+  },
+  "sha256_before": {
+    "home_config": "11b22008048d1bf8932bf8f37c3e0310c2c3986b42045e0d3c1df706b2c26d5b",
+    "config_dir_config": "712046fe6e08a225d672dacd04308ed70a0130b0e6800d70123e2ac4a93c682f"
+  },
+  "sha256_after": {
+    "home_config": "11b22008048d1bf8932bf8f37c3e0310c2c3986b42045e0d3c1df706b2c26d5b",
+    "config_dir_config": "097d080ca004e038e43d69e2b8362fb55b85668b32343596aae9b2a442ca70d7"
+  },
+  "files_the_cli_modified": [
+    "config_dir_config"
+  ]
+}

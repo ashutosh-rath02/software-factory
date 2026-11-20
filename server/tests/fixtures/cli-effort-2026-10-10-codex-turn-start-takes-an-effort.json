@@ -1,0 +1,46 @@
+{
+ "captured": "2026-10-10T05:27:44.533267+00:00",
+ "cli_version": "codex-cli 0.162.0-alpha.17.2",
+ "fixture_verified": true,
+ "generate_exit": 0,
+ "params": {
+  "ThreadResumeParams": {
+   "effort": null,
+   "has_effort": false,
+   "path": "v2/ThreadResumeParams.json",
+   "reasoning_effort": {
+    "description": "A non-empty reasoning effort value advertised by the model.",
+    "minLength": 1,
+    "type": "string"
+   }
+  },
+  "ThreadStartParams": {
+   "effort": null,
+   "has_effort": false,
+   "path": "v2/ThreadStartParams.json",
+   "reasoning_effort": null
+  },
+  "TurnStartParams": {
+   "effort": {
+    "anyOf": [
+     {
+      "$ref": "#/definitions/ReasoningEffort"
+     },
+     {
+      "type": "null"
+     }
+    ],
+    "description": "Override the reasoning effort for this turn and subsequent turns."
+   },
+   "has_effort": true,
+   "path": "v2/TurnStartParams.json",
+   "reasoning_effort": {
+    "description": "A non-empty reasoning effort value advertised by the model.",
+    "minLength": 1,
+    "type": "string"
+   }
+  }
+ },
+ "program": "/factory/bin/codex",
+ "purpose": "where the installed codex app-server protocol carries a reasoning effort; a schema dump only, no repository content and no model call"
+}

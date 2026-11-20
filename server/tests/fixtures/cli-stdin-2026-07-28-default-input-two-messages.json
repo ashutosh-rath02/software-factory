@@ -1,0 +1,30 @@
+{
+ "cli_version": "2.1.92 (Claude Code)",
+ "captured": "2026-07-28",
+ "argv_tail": [
+  "--print",
+  "--output-format",
+  "stream-json",
+  "--verbose"
+ ],
+ "stdin": [
+  "say only the word one",
+  "say only the word two"
+ ],
+ "rc": 0,
+ "timed_out": false,
+ "took_s": 18.3,
+ "stderr": "",
+ "frame_types": [
+  "assistant",
+  "rate_limit_event",
+  "result",
+  "system"
+ ],
+ "frames": 4,
+ "unparseable": [],
+ "results": [
+  "one\ntwo"
+ ],
+ "user_frames": []
+}

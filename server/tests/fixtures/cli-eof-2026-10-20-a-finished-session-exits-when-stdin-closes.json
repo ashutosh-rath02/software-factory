@@ -1,0 +1,62 @@
+{
+  "captured": "2026-10-20",
+  "cli": "2.1.299 (Claude Code)",
+  "why": "SRV-FIX-600. What the REAL agent does after a finished turn, first with stdin left open and then with stdin closed \u2014 which is all E16 does to a Claude session. The stand-in in test_lane_lifecycle.py must give the same verdicts. Re-capture with the argv below (the tool's own argv from app/agent/launch.cpp, with a small model and a one-word prompt; the model does not decide how stdin EOF is handled): send one stream-json user frame, read stdout to the `result` frame, wait 2 s, close stdin, time the exit.",
+  "argv": [
+    "claude",
+    "--print",
+    "--input-format",
+    "stream-json",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-haiku-5-5",
+    "--permission-mode",
+    "auto",
+    "--session-id|--resume",
+    "<uuid>"
+  ],
+  "stdin": {
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Reply with the single word OK."
+        }
+      ]
+    }
+  },
+  "runs": [
+    {
+      "argv_mode": "--session-id",
+      "turn_s": 3.9,
+      "result": {
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 1
+      },
+      "alive_after_result": true,
+      "alive_2s_after_result_stdin_open": true,
+      "exit_after_stdin_close_s": 1.12,
+      "returncode": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv_mode": "--resume",
+      "turn_s": 3.2,
+      "result": {
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 1
+      },
+      "alive_after_result": true,
+      "alive_2s_after_result_stdin_open": true,
+      "exit_after_stdin_close_s": 1.12,
+      "returncode": 0,
+      "stderr_tail": ""
+    }
+  ]
+}
