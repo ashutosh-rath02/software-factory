@@ -1,0 +1,7 @@
+{"seq": 1, "ts": "2026-07-27T09:14:02Z", "kind": "stage", "name": "SPEC", "index": 1, "of": 8}
+{"seq": 2, "ts": "2026-07-27T09:14:03Z", "kind": "human", "text": "run the ticket"}
+{"seq": 3, "ts": "2026-07-27T09:14:05Z", "kind": "prose", "text": "Reading the ticket and the two reports it names."}
+{"seq": 4, "ts": "2026-07-27T09:14:09Z", "kind": "tool", "tool": "Read", "argument": "docs/tickets/TKT-142-stale-artifact-guard.md", "duration_ms": 41, "input": "docs/tickets/TKT-142-stale-artifact-guard.md", "result": "116 lines"}
+{"seq": 5, "ts": "2026-07-27T09:14:31Z", "kind": "file_edit", "path": "src/build/artifact.ts", "added": 18, "removed": 6, "diff": "@@ -12,6 +12,18 @@\n-  return cached\n+  if (stale(cached)) return rebuild()\n+  return cached\n"}
+{"seq": 6, "ts": "2026-07-27T09:15:02Z", "kind": "turn", "cost_usd": 0.41, "duration_s": 60}
+{"seq": 7, "ts": "2026-07-27T09:15:03Z", "kind": "ended", "outcome": "completed"}

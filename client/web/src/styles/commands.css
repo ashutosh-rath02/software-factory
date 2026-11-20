@@ -1,0 +1,32 @@
+/* WEB-FEAT-046 · SPEC.md E19 — the Build and Gate controls in the ticket header.
+
+   Its own file rather than more of app.css, for the reason session.css gives: parallel client
+   tickets are being built against one header, and a stylesheet every one of them appends to is a
+   conflict every one of them has to resolve.
+
+   The design was drawn before E19 had a control, so there is no sample line for one. Nothing is
+   invented: this is `.perm-button`'s shape (app.css :857, itself the design's own token vocabulary)
+   and `.stage-caption`'s treatment for the note beside it — the two nearest things the sheet
+   already has. Every value is a token; tests/theme.test.tsx fails the run on a colour written here. */
+
+.cmd-row {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-3); flex-wrap: wrap;
+}
+
+.cmd-button {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+  border: 1px solid var(--c-line2); background: transparent; border-radius: var(--radius-sm);
+  padding: 3px 10px; cursor: pointer;
+}
+.cmd-button:hover:enabled { color: var(--t1); border-color: var(--t1); }
+/* Disabled is "a command is running", which is a state that ends on its own. It reads as waiting
+   rather than as broken, and the cursor says the click would do nothing. */
+.cmd-button:disabled { cursor: default; opacity: .5; }
+
+/* The manifest key that would have to exist. A key is a thing to be typed into a file, so it is
+   mono at the caption's size — the same treatment the stage caption beside it takes. */
+.cmd-note { font-family: var(--mono); font-size: 10.5px; color: var(--t3); }
+
+/* A refusal is not a caption. Same size, the crash tone, and it stays until the next click. */
+.cmd-error { font-family: var(--mono); font-size: 10.5px; color: var(--st-crash); }

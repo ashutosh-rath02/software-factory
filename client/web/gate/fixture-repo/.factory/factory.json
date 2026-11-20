@@ -1,0 +1,64 @@
+{
+  "factory": "0.1",
+
+  "workspaces": {
+    "core": { "repo": "fixture", "path": ".",     "build": "make -C core", "gate": "cd core && pytest tests/ -v" },
+    "edge": { "repo": "fixture", "path": "edge",  "gate": "npm --prefix edge test" },
+    "web":  { "repo": "fixture", "path": "web",   "build": "npm --prefix web run build", "gate": "npm --prefix web test" }
+  },
+
+  "resources": {
+    "climate-chamber": {
+      "exclusive": true,
+      "needed_by": ["edge"],
+      "description": "one chamber, one run at a time"
+    }
+  },
+
+  "lanes": { "host": 8 },
+
+  "repos": {
+    "fixture": {
+      "path": ".",
+      "docs": {
+        "epics": "docs/requirements",
+        "tickets": "docs/tickets",
+        "reports": "docs/reports",
+        "wiki": "docs/wiki",
+        "escapes": "docs/ESCAPES.md"
+      }
+    }
+  },
+
+  "stages": ["SPEC", "IMPL", "GATE", "DELIVER"],
+
+  "status": { "in_flight": ["in progress", "awaiting-qa"] },
+
+  "display": { "ticket_fields": ["contract", "owner"] },
+
+  "roles": {
+    "reviewer": {
+      "start_on_stage": "GATE",
+      "lane": "new",
+      "prompt_file": ".factory/prompts/reviewer.md"
+    }
+  },
+
+  "default_agent": "claude",
+  "agents": {
+    "claude": {
+      "driver": "claude",
+      "command": "claude",
+      "models": ["claude-test"],
+      "default_model": "claude-test",
+      "permission_mode": "edit_free",
+      "allowed_tools": ["Read(src/*)", "Bash(npm run test:*)"]
+    },
+    "codex": {
+      "driver": "codex",
+      "command": "codex",
+      "models": ["gpt-test", "gpt-other"],
+      "default_model": "gpt-test"
+    }
+  }
+}

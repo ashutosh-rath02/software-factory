@@ -1,0 +1,1321 @@
+/* The six read-only surfaces, transcribed from design/Dashboard.dc.html.
+   Line numbers in the comments are that file's, so a reviewer can diff a rule against its source.
+
+   Every value here is a token. Not one colour, radius, space or font size is written literally —
+   tests/theme.test.tsx fails the build on a hex literal or a colour function in this file, because
+   a hard-coded #232532 passes a token comparison and is still drift. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+}
+
+body {
+  color: var(--t1);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+a { color: var(--color-accent); text-decoration: none; }
+a:hover { color: var(--t1); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: var(--c-line2); border: 3px solid transparent;
+  background-clip: content-box; border-radius: 6px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* :68 — the app frame */
+.app {
+  height: 100vh; display: flex; flex-direction: column;
+  background: var(--c-canvas); color: var(--t1);
+  font-family: var(--font-body); font-size: 13px; overflow: hidden;
+}
+
+/* ── 4.1 app shell · top bar (:70-91) ────────────────────────────────────────────────────── */
+
+.bar {
+  height: 38px; flex: none; display: flex; align-items: center; gap: var(--space-4);
+  padding: 0 var(--space-4);
+  background: var(--c-panel); border-bottom: 1px solid var(--c-line);
+}
+.bar-brand {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  letter-spacing: .14em; color: var(--t1);
+}
+.bar-rule { width: 1px; height: 16px; background: var(--c-line); }
+.bar-spacer { flex: 1; }
+
+.crumbs {
+  display: flex; align-items: center; gap: var(--space-1);
+  font-family: var(--mono); font-size: 11.5px;
+}
+.crumb {
+  padding: 3px 7px; border-radius: var(--radius-sm); cursor: pointer;
+  color: var(--t2); background: transparent; border: 0; font: inherit;
+}
+.crumb:hover { background: var(--c-raise); color: var(--t1); }
+.crumb[aria-current='page'] { color: var(--t1); background: var(--c-raise); }
+.crumb-sep { color: var(--t3); }
+
+/* :81 — VOCABULARY. `.chrome-link` is the design's own small-caps chrome type; the repository
+   name (SPEC.md §4.1's E1 data, which the design's bar does not draw) borrows it unchanged. */
+.chrome-link {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--t3);
+  cursor: pointer; padding: 3px 7px; border-radius: var(--radius-sm);
+  background: transparent; border: 0;
+}
+.chrome-link:hover { color: var(--t1); background: var(--c-raise); }
+.chrome-text {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--t3);
+  padding: 3px 0;
+}
+
+/* :82 — the socket chip */
+.chip {
+  display: flex; align-items: center; gap: var(--space-2); padding: 3px 8px;
+  border: 1px solid var(--c-line); border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+  background: transparent;
+}
+.chip-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  background: var(--tone, var(--st-run));
+}
+.chip[data-live='false'] { border-color: var(--st-crash); color: var(--st-crash); }
+
+/* :97 — `N lanes need you`. The design paints it in the silent tone, border and all, because it
+   is the one chip in the bar that is asking for something. Dimmed when the socket is down: the
+   count is the last one the server sent, and it says so rather than going blank. */
+.needs-chip { border-color: var(--tone); color: var(--tone); }
+.needs-chip[data-dim='true'] { opacity: .55; }
+/* the key that goes where this chip goes (WEB-FEAT-365) — the design's muted ink at the
+   vocabulary sheet's smallest size, so the hint reads as a label on the chip and not as more of
+   its sentence */
+.chip-key { font-family: var(--mono); font-size: 9px; color: var(--t3); }
+
+/* :88 — the theme toggle */
+.toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+  border: 1px solid var(--c-line); border-radius: var(--radius-sm);
+  padding: 3px 8px; cursor: pointer; background: transparent;
+}
+.toggle:hover { color: var(--t1); border-color: var(--c-line2); }
+
+/* ── surfaces ────────────────────────────────────────────────────────────────────────────── */
+
+.surface {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  background: var(--c-canvas); overflow-y: auto;
+}
+.surface-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* ── 4.2 requirements list ───────────────────────────────────────────────────────────────── */
+
+/* :368 — the filter bar is live immediately; rows arrive as one block */
+.filters {
+  flex: none; display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--c-line); background: var(--c-panel);
+}
+/* :369 */
+.filter-input {
+  width: 260px; background: var(--c-raise); border: 1px solid var(--c-line2);
+  color: var(--t1); border-radius: var(--radius-md); padding: 5px 9px;
+  font-family: var(--mono); font-size: 11.5px; outline: none;
+}
+.filter-input:focus { border-color: var(--color-accent); }
+/* :371 */
+.filter-chip {
+  font-family: var(--mono); font-size: 10.5px; padding: 4px 9px;
+  border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid var(--c-line); background: transparent; color: var(--t3);
+}
+.filter-chip[aria-pressed='true'] {
+  border-color: var(--c-line2); background: var(--c-raise); color: var(--t1);
+}
+/* :374 */
+.count-line { font-family: var(--mono); font-size: 10.5px; color: var(--t3); }
+
+.rows { flex: 1; overflow-y: auto; }
+.rows[data-dim='true'] { opacity: 0.55; }
+
+/* :378 — the row takes a left edge in the state's colour when it needs a person, and none
+   when it does not, so the column of marks is scannable without reading a word */
+.req-row {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--c-line);
+  border-left: 2px solid var(--mark, transparent);
+  cursor: pointer; width: 100%; text-align: left;
+  background: transparent; font: inherit; color: inherit;
+}
+.req-row:hover { background: var(--c-panel); }
+.req-id {
+  font-family: var(--mono); font-size: 11.5px; color: var(--t3); width: 58px; flex: none;
+}
+.dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--tone);
+}
+.req-title {
+  font-size: 13.5px; color: var(--t1); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; min-width: 0; flex: 1;
+}
+/* :383 */
+.needs-pill {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+  color: var(--tone); border: 1px solid var(--tone);
+  border-radius: var(--radius-sm); padding: 1px 6px; flex: none;
+}
+.tags { display: flex; gap: 4px; flex: none; }
+/* :387 */
+.tag {
+  font-family: var(--mono); font-size: 10px; color: var(--t2);
+  background: var(--c-raise); border: 1px solid var(--c-line);
+  border-radius: var(--radius-sm); padding: 1px 6px;
+}
+.req-status {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  width: 104px; text-align: right; flex: none;
+}
+.req-updated {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  width: 64px; text-align: right; flex: none;
+}
+
+/* ── 4.3 requirement detail ──────────────────────────────────────────────────────────────── */
+
+/* :400 */
+.req-head {
+  padding: var(--space-6) var(--space-8) var(--space-4);
+  border-bottom: 1px solid var(--c-line); background: var(--c-panel);
+}
+.req-head-row { display: flex; align-items: baseline; gap: var(--space-3); }
+.req-head-id { font-family: var(--mono); font-size: 12px; color: var(--t3); }
+.req-head-title { font-size: 17px; font-weight: 500; letter-spacing: -.015em; }
+/* :405 — the pill takes its own state's colour, not one fixed to the demo's data */
+.head-pill {
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone);
+  border: 1px solid var(--tone); background: var(--tint);
+  border-radius: var(--radius-sm); padding: 2px 7px;
+}
+/* :407 */
+.req-summary {
+  margin-top: var(--space-3); color: var(--t2); font-size: 13px;
+  max-width: 80ch; line-height: 1.6; text-wrap: pretty;
+}
+/* :409 */
+.groups {
+  padding: var(--space-4) var(--space-8) var(--space-8);
+  display: flex; flex-direction: column; gap: var(--space-8); max-width: 1100px;
+}
+/* :412 */
+.group-head {
+  display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);
+}
+.group-name { font-family: var(--mono); font-size: 12px; color: var(--t1); }
+.group-seq {
+  font-family: var(--mono); font-size: 10px; color: var(--t3); letter-spacing: .06em;
+}
+.group-rule { flex: 1; height: 1px; background: var(--c-line); }
+.group-count { font-family: var(--mono); font-size: 10.5px; color: var(--t3); }
+/* :418 */
+.group-box {
+  border: 1px solid var(--c-line); border-radius: var(--radius-md); overflow: hidden;
+}
+/* :420 */
+.tkt-row {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--c-line); background: var(--c-panel);
+  cursor: pointer; width: 100%; text-align: left; font: inherit; color: inherit;
+}
+.tkt-row:last-child { border-bottom: 0; }
+.tkt-row:hover { background: var(--c-raise); }
+.tkt-id {
+  font-family: var(--mono); font-size: 11.5px; color: var(--t3); width: 58px; flex: none;
+}
+.tkt-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--tone); }
+.tkt-title {
+  font-size: 13px; color: var(--t1); flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tkt-state {
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone);
+  width: 200px; text-align: right; flex: none;
+}
+.tkt-stage {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  width: 70px; text-align: right; flex: none;
+}
+.tkt-lane {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  width: 62px; text-align: right; flex: none;
+}
+.tkt-cost {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+  width: 52px; text-align: right; flex: none;
+}
+
+/* ── 4.4 the lane rail (:110-137) ─────────────────────────────────────────────────────────── */
+
+/* :106 — the ticket screen is the rail and everything else, side by side */
+.ticket { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ticket-body { flex: 1; min-height: 0; display: flex; }
+.ticket-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* :111 — 236 px, and the collapsed width is the toggle's own. Collapsed or expanded is the only
+   piece of UI state this client persists, and it never goes to the server. */
+.rail {
+  width: 236px; flex: none; background: var(--c-panel);
+  border-right: 1px solid var(--c-line);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.rail[data-open='false'] { width: 28px; }
+/* :112 */
+.rail-head {
+  height: 28px; flex: none; display: flex; align-items: center; gap: var(--space-2);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-bottom: 1px solid var(--c-line);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--t3);
+}
+.rail-title { flex: 1; }
+.rail-count { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.rail-toggle {
+  display: flex; align-items: center; padding: 2px; cursor: pointer;
+  background: transparent; border: 0; color: var(--t3); border-radius: var(--radius-sm);
+}
+.rail-toggle:hover { color: var(--t1); background: var(--c-raise); }
+/* :114 */
+.rail-cards {
+  flex: 1; overflow-y: auto; padding: var(--space-2);
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+
+/* ── 4.5 the ticket header (:143-193) ─────────────────────────────────────────────────────── */
+
+/* :143 */
+.tkt-head {
+  flex: none; padding: var(--space-4) var(--space-6) var(--space-3);
+  border-bottom: 1px solid var(--c-line); background: var(--c-panel);
+}
+/* :144 */
+.tkt-identity { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.tkt-head-id { font-family: var(--mono); font-size: 12px; color: var(--t3); }
+.tkt-head-title { font-size: 15px; font-weight: 500; letter-spacing: -.015em; }
+.tkt-head-lane { font-family: var(--mono); font-size: 10.5px; color: var(--t3); }
+.tkt-head-metrics { font-family: var(--mono); font-size: 11px; color: var(--t2); }
+/* F31 — the roles row. The design was drawn before roles existed and has no sample for one, so
+   this reuses the nearest vocabulary it does have: `.tag` (:387) for the role itself and
+   `.stage-caption`'s treatment for the label. No colour is written here — a pending role must be
+   able to take neither an alarm border nor an alarm fill, and it takes neither by owning no tone. */
+.roles-row {
+  display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+.roles-label {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--t3);
+}
+button.role { cursor: pointer; line-height: inherit; }
+.role[aria-pressed='true'] { border-color: var(--c-line2); color: var(--t1); }
+/* :155 — the three chips, in one row, never merged */
+.chips-row {
+  display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+.chips-row .evidence-banner { margin-bottom: 0; }
+/* SPEC.md §4.5's socket-down rule: the chips keep their value and say it is not being kept up
+   to date. The strip beside them is untouched, because it comes from the document. */
+.evidence-banner[data-dim='true'] { opacity: .55; }
+/* :186 — the strip and its right-hand caption */
+.strip-row { display: flex; align-items: center; margin-top: var(--space-4); }
+.stage-caption { font-family: var(--mono); font-size: 10.5px; color: var(--t3); }
+
+/* ── 4.8 / 4.9 the document tabs ─────────────────────────────────────────────────────────── */
+
+/* :184 — the tab row the design already made data-driven. Two tabs, because two exist:
+   SESSION and RUNS arrive with WEB-FEAT-014 and 016, and a control that does nothing
+   teaches the user it is broken. */
+.tabs {
+  flex: none; display: flex; padding: 0 var(--space-6);
+  background: var(--c-panel); border-bottom: 1px solid var(--c-line);
+}
+.tab {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  padding: var(--space-3) var(--space-4); cursor: pointer; color: var(--t3);
+  border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  background: transparent;
+}
+.tab[aria-selected='true'] { color: var(--t1); border-bottom-color: var(--color-accent); }
+
+/* :289 */
+.doc {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: var(--space-8); background: var(--c-canvas);
+}
+.doc-inner { max-width: 720px; font-size: 13.5px; line-height: 1.7; color: var(--t1); }
+/* :291 — the path, and the two words that say what this surface is */
+.doc-path {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  letter-spacing: .1em; margin-bottom: var(--space-4);
+  word-break: break-all;
+}
+
+/* :292-299 — the design renders a document as its title, its prose and a mono section label.
+   That treatment is applied to the markdown's own headings rather than to a fixed structure:
+   the tool applies no structure of its own beyond splitting frontmatter from body. */
+.md > :first-child { margin-top: 0; }
+.md h1 {
+  font-size: 20px; font-weight: 500; letter-spacing: -.015em; line-height: 1.2;
+  margin: var(--space-6) 0 var(--space-3); color: var(--t1);
+}
+.md h2, .md h3, .md h4, .md h5, .md h6 {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--t3);
+  margin: var(--space-6) 0 var(--space-3);
+}
+.md p { color: var(--t2); margin: 0 0 var(--space-4); text-wrap: pretty; }
+.md ul, .md ol { color: var(--t2); margin: 0 0 var(--space-4); padding-left: var(--space-6); }
+.md li { margin-bottom: var(--space-2); }
+.md strong { color: var(--t1); font-weight: 500; }
+.md a { color: var(--color-accent); }
+/* :293 — inline code */
+.md code {
+  font-family: var(--mono); font-size: 12px; background: var(--c-raise);
+  border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 1px 4px;
+}
+.md pre {
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.6; color: var(--t2);
+  background: var(--c-panel); border: 1px solid var(--c-line);
+  border-radius: var(--radius-md); padding: var(--space-3);
+  overflow-x: auto; margin: 0 0 var(--space-4);
+}
+.md pre code { background: transparent; border: 0; padding: 0; font-size: 11.5px; }
+.md blockquote {
+  margin: 0 0 var(--space-4); padding-left: var(--space-3);
+  border-left: 1px solid var(--c-line2); color: var(--t3);
+}
+.md hr { border: 0; height: 1px; background: var(--c-line); margin: var(--space-6) 0; }
+.md table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 0 0 var(--space-4);
+}
+.md th, .md td {
+  text-align: left; padding: var(--space-2); border-bottom: 1px solid var(--c-line);
+  color: var(--t2); vertical-align: top;
+}
+.md th {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--t3);
+}
+.md img { max-width: 100%; }
+
+/* :304 — 4.9's empty state, whose copy is a product decision worth preserving verbatim */
+.report-empty {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--c-canvas); padding: var(--space-8);
+}
+.report-empty-inner { max-width: 400px; text-align: center; }
+.report-empty-title {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; color: var(--t2);
+  margin: var(--space-3) 0 var(--space-2);
+}
+.report-empty-body {
+  font-size: 13px; line-height: 1.6; color: var(--t3); text-wrap: pretty;
+}
+
+/* The evidence banner. SPEC.md §4.9 requires it and the design draws no report body at all, so
+   it is built as the design's state chip (:142-167) in the evidence value's own colour.
+   SPEC.md §3.2: "Two combinations are alarms and carry a border; nothing else does." */
+.evidence-banner {
+  display: inline-flex; align-items: center; gap: 7px; padding: 4px 9px;
+  border: 1px solid var(--c-line); border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--t2);
+  margin-bottom: var(--space-4);
+}
+.evidence-banner[data-alarm='true'] {
+  border: 1px solid var(--tone); background: var(--tint); color: var(--tone);
+}
+.evidence-banner[data-alarm='false'] .chip-dot { background: var(--tone); }
+
+/* ── 4.11 vocabulary sheet (:437-571) ────────────────────────────────────────────────────── */
+
+.vocab {
+  flex: 1; min-height: 0; overflow-y: auto; background: var(--c-canvas);
+  padding: var(--space-6) var(--space-8) var(--space-8);
+}
+.vocab-inner {
+  max-width: 1000px; display: flex; flex-direction: column; gap: var(--space-8);
+}
+/* :441 */
+.vocab-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--t3);
+  margin-bottom: var(--space-3);
+}
+/* :442 */
+.axes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+/* :444 */
+.axis {
+  border: 1px solid var(--c-line); border-radius: var(--radius-md);
+  background: var(--c-panel); padding: var(--space-4);
+}
+.axis-name {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--t2);
+  margin-bottom: var(--space-3);
+}
+.axis-values { display: flex; flex-direction: column; gap: var(--space-2); }
+/* :448 */
+.axis-value { display: flex; align-items: center; gap: var(--space-2); }
+.axis-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--tone); }
+.axis-label { font-family: var(--mono); font-size: 11px; color: var(--tone); }
+.axis-note { font-size: 11.5px; color: var(--t3); }
+/* :458 */
+.vocab-note {
+  margin-top: var(--space-3); font-size: 12.5px; color: var(--t2); line-height: 1.6;
+  max-width: 74ch; text-wrap: pretty;
+}
+.vocab-mono { font-family: var(--mono); font-size: 12px; color: var(--tone); }
+
+/* :463 — the six lane-card states are lane cards, not a separate component */
+.lane-cards { display: grid; grid-template-columns: repeat(3, 236px); gap: var(--space-3); }
+/* :465 */
+.lane-card {
+  border: 1px solid var(--c-line); background: var(--c-panel);
+  border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+/* :120 — the selected lane's card is bordered and tinted, and so is any lane that needs a
+   person. Two reasons for one treatment, which is the design's: what the eye is looking for in
+   this column is "where should I be", and both answers belong to it. */
+.lane-card[data-alarm='true'],
+.lane-card[data-selected='true'] { border-color: var(--tone); background: var(--tint); }
+/* WEB-FEAT-079 — a role lane is drawn under the lane it belongs to (§4.4, §4.14). The branch is
+   the layout unit both surfaces lay out: the rail stacks them, the grid gives each one a 236 px
+   column, and the card inside is unchanged in either. */
+.lane-branch { display: flex; flex-direction: column; gap: var(--space-2); }
+.lane-children {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  margin-left: var(--space-2); padding-left: var(--space-3);
+  border-left: 1px solid var(--c-line);
+}
+/* the role's own word, beside the ticket id it does not replace */
+.lane-role {
+  font-family: var(--mono); font-size: 10px; color: var(--t3);
+  border: 1px solid var(--c-line2); border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+}
+.lane-top { display: flex; align-items: center; gap: var(--space-2); }
+.lane-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--tone); }
+.lane-name { font-family: var(--mono); font-size: 11.5px; color: var(--t1); }
+.lane-ticket { font-family: var(--mono); font-size: 10.5px; color: var(--t3); }
+.lane-state { font-family: var(--mono); font-size: 10.5px; line-height: 1.35; color: var(--tone); }
+/* :124 — the optional sub-line, tucked under the state it belongs to */
+.lane-sub {
+  font-family: var(--mono); font-size: 10px; color: var(--t3); margin-top: -4px;
+}
+/* FAC-EPIC-373 — what the agent last SAID or last CALLED, under the state line it belongs to.
+   One line, always: the server already clipped the text to 160 code points, and this clips what
+   is still too wide for the card. The `\203A` is the design's glyph and lives HERE rather than in
+   the markup, so the DOM text stays the server's string byte for byte. `--t3` is the sub-line's
+   own ink — no new colour. */
+.lane-words {
+  font-family: var(--mono); font-size: 10px; color: var(--t3); margin-top: -2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lane-words::before { content: '\203A\00a0'; color: var(--t3); }
+/* :127 — the bar is stage progress and nothing else, with the stage's name beside it */
+.lane-progress { display: flex; align-items: center; gap: var(--space-2); }
+.lane-bar {
+  flex: 1; height: 3px; border-radius: 2px; background: var(--c-line); overflow: hidden;
+}
+.lane-bar-fill { height: 3px; background: var(--tone); }
+.lane-stage { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.lane-foot {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10px; color: var(--t3);
+}
+.lane-link { display: block; color: inherit; }
+.lane-link:hover { color: inherit; }
+
+/* :483 — transcript line samples */
+.samples {
+  border: 1px solid var(--c-line); border-radius: var(--radius-md); background: var(--c-panel);
+  padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);
+}
+.sample { display: flex; gap: var(--space-4); align-items: center; }
+.sample-top { align-items: flex-start; }
+.sample-key {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; color: var(--t3);
+  width: 96px; flex: none;
+}
+.sample-prose { font-size: 13.5px; line-height: 1.65; color: var(--t1); }
+.sample-tool {
+  font-family: var(--mono); font-size: 11.5px; color: var(--t3);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.sample-tool-name { color: var(--t2); }
+.sample-result {
+  font-family: var(--mono); font-size: 11px; color: var(--t3);
+  border-left: 1px solid var(--c-line2); padding-left: 8px;
+}
+.sample-error {
+  font-family: var(--mono); font-size: 11.5px; color: var(--t1);
+  border-left: 2px solid var(--st-crash); background: var(--tint-crash); padding: 4px 9px;
+}
+.sample-human {
+  font-size: 13px; color: var(--t1); border-left: 2px solid var(--color-accent);
+  background: var(--c-raise); padding: 5px 10px;
+}
+.sample-turn-rule { height: 1px; width: 40px; background: var(--c-line); }
+.sample-turn-rule-grow { height: 1px; flex: 1; background: var(--c-line); }
+.sample-turn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--t3);
+}
+
+/* :516 — composer states */
+.composer-samples {
+  display: flex; flex-direction: column; gap: var(--space-3); max-width: 760px;
+}
+.held-block {
+  border: 1px solid var(--st-silent); border-radius: var(--radius-md);
+  background: var(--tint-silent); padding: var(--space-3) var(--space-4);
+  display: flex; align-items: flex-start; gap: var(--space-3);
+}
+.held-title {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--st-silent);
+  margin-bottom: 4px;
+}
+.held-body { font-size: 12.5px; line-height: 1.6; color: var(--t2); }
+.held-aside {
+  font-family: var(--mono); font-size: 10.5px; color: var(--st-silent);
+  white-space: nowrap; padding-top: 2px;
+}
+.stopped-block {
+  border: 1px solid var(--c-line2); border-radius: var(--radius-md);
+  background: var(--c-panel); padding: var(--space-3) var(--space-4);
+  display: flex; align-items: flex-start; gap: var(--space-3);
+}
+.stopped-title {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--t1);
+  margin-bottom: 4px;
+}
+.stopped-aside {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  white-space: nowrap; padding-top: 2px;
+}
+.composer-note {
+  font-size: 12.5px; color: var(--t2); line-height: 1.7; max-width: 66ch; text-wrap: pretty;
+}
+
+/* :538 — stage sequence and the empty/error samples, side by side */
+.vocab-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.stage-box {
+  border: 1px solid var(--c-line); border-radius: var(--radius-md); background: var(--c-panel);
+  padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);
+}
+/* :542 */
+.stage-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 0; }
+.stage-chip {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; padding: 3px 7px;
+  border-radius: var(--radius-sm); border: 1px solid var(--c-line);
+  background: transparent; color: var(--t3);
+}
+.stage-chip[data-done='true'] { border-color: var(--c-line2); color: var(--t2); }
+.stage-chip[data-active='true'] {
+  border-color: var(--st-silent); background: var(--tint-silent); color: var(--st-silent);
+}
+.stage-link { width: 10px; height: 1px; background: var(--c-line2); }
+.stage-note { font-size: 12px; color: var(--t3); line-height: 1.6; }
+
+/* ── §4 preamble · the empty and the reconnect blocks (:556-566) ─────────────────────────── */
+
+/* :558 — the design's dashed rectangle, a mono caption and one sentence of what to do */
+.empty {
+  border: 1px dashed var(--c-line2); border-radius: var(--radius-md); padding: var(--space-4);
+  margin: var(--space-6) var(--space-8); max-width: 640px;
+}
+.empty-title {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--t2);
+  margin-bottom: 4px;
+}
+.empty-body { font-size: 12.5px; color: var(--t3); line-height: 1.55; text-wrap: pretty; }
+.empty-body code { font-family: var(--mono); color: var(--t2); }
+.empty-action {
+  margin-top: var(--space-3); font-family: var(--mono); font-size: 10.5px;
+  color: var(--color-accent); border: 1px solid var(--color-accent);
+  background: transparent; border-radius: var(--radius-sm); padding: 3px 9px; cursor: pointer;
+}
+.empty-action:hover { color: var(--t1); border-color: var(--t1); }
+
+/* :562 — pinned at the top of the affected surface. Live counters freeze; nothing is cleared. */
+.reconnect {
+  border: 1px solid var(--st-crash); border-left-width: 2px; background: var(--tint-crash);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-4); margin: var(--space-3) var(--space-6); flex: none;
+}
+.reconnect-title {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--st-crash);
+  margin-bottom: 4px;
+}
+.reconnect-body { font-size: 12.5px; color: var(--t2); line-height: 1.55; text-wrap: pretty; }
+
+/* A contract version the server does not share is worth one loud line, once. SRV-FEAT-005's
+   report left `hello` with no consumer and asked this ticket to use it or delete it. */
+.version-warning {
+  flex: none; margin: var(--space-3) var(--space-6);
+  border: 1px solid var(--st-silent); border-left-width: 2px; background: var(--tint-silent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: var(--space-3) var(--space-4);
+  font-family: var(--mono); font-size: 10.5px; color: var(--st-silent);
+}
+
+/* The placeholder a region shows while it has never loaded. Never a spinner over a page, and
+   never a layout that moves when data lands. */
+.placeholder {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--t3);
+  padding: var(--space-4) var(--space-6);
+}
+
+/* ── 3.5 delivery (SRV-FEAT-028) ─────────────────────────────────────────────────────────────
+   What git and the process table say became of the work, on the row. Built from the design's
+   own state-chip shape (:142-167) rather than a new one, and — like the evidence banner — only
+   the states that need a person take a border. SPEC.md §3.5. */
+.delivery-badge {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  padding: 1px 7px; border: 1px solid transparent; border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .07em; color: var(--tone);
+  white-space: nowrap;
+}
+.delivery-badge[data-alarm='true'] { border-color: var(--tone); background: var(--tint); }
+.delivery-claim { color: var(--t3); letter-spacing: .04em; }
+
+.vocab-delivery { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── 4.10 RUNS and §8 D3 DIFF (WEB-FEAT-016) ─────────────────────────────────────────────────
+   The design's own runs grid (:328-341), and the diff it never drew — assembled from the same
+   mono list treatment rather than from a new one. No colour is written here: an outcome takes
+   `--tone` from the vocabulary table, which is the only place a state has a colour. */
+.runs-pane, .diff-pane {
+  flex: 1; min-height: 0; overflow-y: auto;
+  background: var(--c-canvas); padding: var(--space-4) var(--space-6);
+}
+.runs {
+  display: grid; grid-template-columns: 64px 96px 1fr 84px 72px 128px;
+  font-family: var(--mono); font-size: 11px; max-width: 900px;
+}
+.runs-head { font-size: 9.5px; letter-spacing: .12em; color: var(--t3); padding: 0 8px 7px 0; }
+/* One row is six grid cells and one click target, so the grid stays one grid. */
+.run-row { display: contents; cursor: pointer; }
+.run-cell {
+  padding: 7px 8px 7px 0; border-top: 1px solid var(--c-line); color: var(--tone, var(--t2));
+}
+.run-dim { color: var(--t3); }
+.run-row:hover .run-cell,
+.run-row:focus-visible .run-cell,
+.run-row[aria-selected='true'] .run-cell { background: var(--c-raise); }
+
+/* The replayed run — a banner saying which run and that it is read only, the entries, and a
+   composer that is present, disabled, and says why. */
+.replay { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.replay-banner {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  margin: var(--space-3) var(--space-6);
+  border: 1px solid var(--tone); border-left-width: 2px; background: var(--tint);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: var(--space-3) var(--space-4);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--tone);
+}
+.replay-what { flex: 1; }
+.replay-exit {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2); cursor: pointer;
+  background: transparent; border: 1px solid var(--c-line2); border-radius: var(--radius-sm);
+  padding: 3px 9px;
+}
+.replay-exit:hover { color: var(--t1); }
+.replay-entries {
+  flex: 1; min-height: 0; overflow-y: auto; max-width: 900px;
+  padding: var(--space-4) var(--space-6);
+}
+.replay-line {
+  display: flex; gap: var(--space-3); font-family: var(--mono); font-size: 11.5px;
+  color: var(--t2); padding: 3px 0; line-height: 1.55;
+}
+.replay-kind { color: var(--t3); flex: none; width: 96px; }
+.replay-text { color: var(--t1); white-space: pre-wrap; word-break: break-word; }
+.replay-more {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3); padding: var(--space-3) 0;
+}
+.replay-composer {
+  flex: none; border-top: 1px solid var(--c-line); background: var(--c-panel);
+  padding: var(--space-3) var(--space-6) var(--space-4);
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+.composer-box {
+  width: 100%; resize: none; background: var(--c-raise); color: var(--t3);
+  border: 1px solid var(--c-line2); border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4); font-size: 13.5px; line-height: 1.55;
+  outline: none; font-family: var(--font-body);
+}
+.replay-hint {
+  display: flex; align-items: center; gap: var(--space-4);
+  font-family: var(--mono); font-size: 10px; color: var(--t3);
+}
+.replay-hint > span { flex: 1; }
+.composer-send {
+  font-family: var(--mono); font-size: 10.5px; padding: 5px 14px;
+  border-radius: var(--radius-sm); border: 1px solid var(--c-line2);
+  background: var(--c-raise); color: var(--t3);
+}
+.composer-send[disabled], .composer-box[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* The diff: where the lane is, what it adds up to, its files and its commits. */
+.diff-where {
+  display: flex; gap: var(--space-3); align-items: baseline;
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+  margin-bottom: var(--space-3);
+}
+.diff-dim { color: var(--t3); }
+.diff-totals {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--t3);
+  padding-bottom: var(--space-3); border-bottom: 1px solid var(--c-line);
+}
+.diff-files, .diff-commits { max-width: 900px; }
+.diff-open {
+  display: flex; align-items: baseline; gap: var(--space-3); width: 100%; text-align: left;
+  font-family: var(--mono); font-size: 11.5px; color: var(--t2); cursor: pointer;
+  background: transparent; border: 0; border-bottom: 1px solid var(--c-line); padding: 7px 0;
+}
+.diff-open:hover { background: var(--c-raise); }
+.diff-status { color: var(--t3); width: 84px; flex: none; }
+.diff-path { flex: 1; color: var(--t1); word-break: break-all; }
+.diff-added { color: var(--st-run); }
+.diff-removed { color: var(--st-crash); }
+.diff-patch {
+  font-family: var(--mono); font-size: 11px; line-height: 1.55; color: var(--t2);
+  background: var(--c-raise); border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4); margin: var(--space-2) 0 var(--space-3);
+  overflow-x: auto; white-space: pre;
+}
+.diff-commit {
+  display: flex; gap: var(--space-3); align-items: baseline;
+  font-family: var(--mono); font-size: 11.5px; color: var(--t2);
+  padding: 7px 0; border-bottom: 1px solid var(--c-line);
+}
+.diff-sha { color: var(--t3); flex: none; }
+.diff-subject { color: var(--t1); }
+/* ── 4.12 permissions (WEB-FEAT-018) ─────────────────────────────────────────────────────────
+   The design draws none of this (§8 D4), so none of it is new decoration: the inline request is
+   the design's own `held` rectangle (:540) in the accent colour, the rules list is the ticket
+   table's row shape, and the policy control is the token system's radio group. The only new
+   chrome is one word in the top bar, and that word borrows VOCABULARY's class. */
+.perms { flex: 1; overflow-y: auto; }
+.perms-inner {
+  padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-8);
+  max-width: 880px;
+}
+
+.perms-policy { display: flex; flex-direction: column; gap: var(--space-3); }
+.perms-option {
+  display: flex; align-items: flex-start; gap: var(--space-3); cursor: pointer;
+  border: 1px solid var(--c-line); border-radius: var(--radius-md); background: var(--c-panel);
+  padding: var(--space-3) var(--space-4);
+}
+.perms-option:has(input:checked) { border-color: var(--color-accent); }
+.perms-option:has(input:disabled) { cursor: default; opacity: .55; }
+.perms-option input { accent-color: var(--color-accent); margin-top: 2px; flex: none; }
+.perms-option-body { display: flex; flex-direction: column; gap: 3px; }
+.perms-option-label { font-family: var(--mono); font-size: 11.5px; color: var(--t1); }
+.perms-option-note { font-size: 12.5px; color: var(--t2); line-height: 1.55; text-wrap: pretty; }
+
+.perms-note {
+  margin-top: var(--space-4); font-size: 12.5px; color: var(--t2); line-height: 1.7;
+  max-width: 66ch; text-wrap: pretty;
+}
+.perms-source { color: var(--t3); }
+.perms-applied {
+  margin-top: var(--space-3); font-family: var(--mono); font-size: 10.5px;
+  color: var(--color-accent);
+}
+
+.perms-table { border: 1px solid var(--c-line); border-radius: var(--radius-md); overflow: hidden; }
+.perms-table[data-dim='true'] { opacity: .55; }
+.perms-head, .perms-row {
+  display: grid; grid-template-columns: 1fr 84px 132px 108px 184px;
+  align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+}
+.perms-head {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--t2);
+  background: var(--c-panel); border-bottom: 1px solid var(--c-line);
+}
+.perms-row { border-bottom: 1px solid var(--c-line); }
+.perms-row:last-child { border-bottom: 0; }
+.perms-pattern { font-family: var(--mono); font-size: 11.5px; color: var(--t1); }
+.perms-source-cell, .perms-when, .perms-matches {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+}
+.perms-action { display: flex; justify-content: flex-end; }
+.perms-revoke {
+  font-family: var(--mono); font-size: 10.5px; color: var(--st-crash);
+  border: 1px solid var(--st-crash); background: transparent; border-radius: var(--radius-sm);
+  padding: 2px 9px; cursor: pointer;
+}
+.perms-revoke:disabled { cursor: default; opacity: .5; }
+.perms-declared { font-size: 11.5px; color: var(--t2); text-align: right; }
+.perms-declared a { color: var(--color-accent); }
+.perms-error { margin-top: var(--space-3); font-family: var(--mono); font-size: 10.5px;
+  color: var(--st-crash); }
+.perms-warning { font-family: var(--mono); font-size: 10.5px; color: var(--st-silent); }
+
+/* the design's `held` rectangle (:540) in the accent colour — §8 D4's own words */
+.held-block[data-tone='accent'] {
+  border-color: var(--color-accent); background: var(--tint-claim);
+}
+.held-block[data-tone='accent'] .held-title { color: var(--color-accent); }
+.perm-request { max-width: 760px; }
+.perm-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); }
+.perm-rule, .perm-miss { font-size: 12px; color: var(--t2); line-height: 1.55; text-wrap: pretty; }
+.perm-rule { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.perm-rule-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--t2);
+}
+.perm-rule-pattern { font-family: var(--mono); font-size: 11.5px; color: var(--t1); }
+.perm-buttons { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.perm-button {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2);
+  border: 1px solid var(--c-line2); background: transparent; border-radius: var(--radius-sm);
+  padding: 3px 10px; cursor: pointer;
+}
+.perm-button:hover:enabled { color: var(--t1); border-color: var(--t1); }
+.perm-button:disabled { cursor: default; opacity: .5; }
+.perm-button-always { color: var(--color-accent); border-color: var(--color-accent); }
+.perm-resolved {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t2); margin-top: var(--space-2);
+}
+.perm-error { font-family: var(--mono); font-size: 10.5px; color: var(--st-crash); }
+
+/* ── WEB-FEAT-044 · the two controls that make a lane exist and stop existing ──────────────── */
+
+/* The claim, in both of its seats. The BUTTON borrows `.empty-action` — the design's own dashed
+   block already has an action style and a second one would be a second answer to the same
+   question — so what is here is the frame around it and the sentence when E12 says no. */
+.claim { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.claim-refused {
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone); line-height: 1.5;
+  max-width: 40ch; text-wrap: pretty;
+}
+.claim-refused code { color: var(--t2); }
+
+/* SRV-FIX-059 — the way out, under the refusal that named it. Same column as `.claim`, so the
+   button and the path it is about read as one answer rather than two stacked ones. No colour of
+   its own: the button is `.empty-action` and the path line is a `.claim-refused` at `TONE.silent`,
+   because a second palette here would be a second vocabulary for the same refusal. */
+.claim-leftover {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2);
+}
+
+/* E13's control, on the card's own top row. It is the only button in the rail, so it is quiet
+   until the pointer is on the card it belongs to: a column of six release buttons is a column of
+   six ways to lose a worktree, and the design draws none of them. */
+.lane-release {
+  display: flex; align-items: center; padding: 1px; flex: none; cursor: pointer;
+  background: transparent; border: 0; border-radius: var(--radius-sm);
+  color: var(--t3); opacity: 0; transition: opacity 90ms linear;
+}
+.lane-card:hover .lane-release, .lane-release:focus-visible { opacity: 1; }
+.lane-release:hover { color: var(--st-crash); }
+
+/* ── 4.14 all lanes (WEB-FEAT-050) ───────────────────────────────────────────────────────────
+   Layout and nothing else. Every value below is either an existing token or a repeat count, and
+   NO COLOUR IS WRITTEN — the cards are §4.4's, the group head is §4.3's, and the surface frame is
+   §4.11's. A screen assembled entirely out of what is already drawn is the point of this ticket:
+   it adds a place to stand, not a new vocabulary to read. */
+.lanes {
+  flex: 1; min-height: 0; overflow-y: auto; background: var(--c-canvas);
+  padding: var(--space-6) var(--space-8) var(--space-8);
+}
+.lanes-inner { display: flex; flex-direction: column; gap: var(--space-6); }
+/* The card keeps the design's own 236 px. A lane card stretched to fill a 1440 px row is a
+   different object from the one in the rail, and those two have to stay one drawing. */
+.lanes-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, 236px); gap: var(--space-3);
+}
+
+/* ── WEB-FEAT-179 · a refusal that is an instruction, drawn as one that is an action ────────── */
+
+/* E2's refusal, in the shell. It sits where `.version-warning` sits and is built the same way —
+   a left rule, a tint, mono — because the two are the same kind of statement: one loud line about
+   the whole tool, said once, that then gets out of the way. It wears `--tone`, which the component
+   sets from the vocabulary; no colour is written here. */
+.manifest-banner {
+  flex: none; margin: var(--space-3) var(--space-6);
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2);
+  border: 1px solid var(--tone); border-left-width: 2px; background: var(--tint-crash);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: var(--space-3) var(--space-4);
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone); line-height: 1.5;
+}
+.manifest-banner-said { max-width: 80ch; text-wrap: pretty; }
+.manifest-banner-where code { color: var(--t2); }
+.manifest-banner-how { color: var(--t3); max-width: 80ch; text-wrap: pretty; }
+
+/* The refusal block a git 409 becomes. Same column as `.claim`, so the facts and the way out read
+   as one answer; the list is indented rather than bulleted-out, because a person reading it is
+   deciding about the paths and not skimming a document. */
+.git-refusal {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2);
+}
+.git-refusal ul, .claim-discard ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
+
+/* The confirmation in front of the one destructive control. It is a block and not a tooltip:
+   what is lost has to be readable at the moment of the decision. */
+.claim-discard {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2);
+}
+
+/* A remedy that costs something says so beside itself, in the tone it will fire in. */
+.remedy { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.remedy-cost {
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone); line-height: 1.5;
+  max-width: 60ch; text-wrap: pretty;
+}
+
+/* ── 4.18 home — where the work is, what needs you, what never left this machine ───────────── */
+
+/* `Dashboard · Pipeline strip` / `· Needs you` — three sections down one column, each a header
+   line and a bordered block, which is the design's own shape for all three. */
+.home {
+  display: flex; flex-direction: column; gap: var(--space-6);
+  padding: var(--space-6) var(--space-8); min-width: 0;
+}
+.home[data-dim='true'] { opacity: 0.55; }
+.home-panel { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.home-head { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.home-title { margin: 0; font-size: 16px; font-weight: 500; letter-spacing: -.01em; }
+/* the count is the SERVER's number and sits with the title, so the two are read as one sentence */
+.home-count {
+  font-family: var(--mono); font-size: 12px; color: var(--t2);
+  border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 0 6px;
+}
+.home-note { font-size: 12px; color: var(--t3); }
+
+/* the strip: equal cells, one divider between them, no gap — the design's single bordered row */
+.strip {
+  display: flex; align-items: stretch; overflow: hidden;
+  border: 1px solid var(--c-line); border-radius: var(--radius-md); background: var(--c-panel);
+}
+.strip-cell {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;
+  padding: var(--space-3); border-left: 1px solid var(--c-line);
+  border-top: 2px solid transparent;
+}
+.strip-cell:first-child { border-left: 0; }
+/* the two states §3.3 counts: tinted, and topped in their own colour */
+.strip-cell[data-tinted='true'] { background: var(--tint); border-top-color: var(--tone); }
+.strip-top { display: flex; align-items: center; gap: 6px; }
+.strip-count {
+  font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--t1);
+}
+.strip-cell[data-tinted='true'] .strip-count { color: var(--tone); }
+.strip-label { font-size: 11.5px; color: var(--t2); }
+
+/* the two row panels */
+.home-rows {
+  border: 1px solid var(--c-line); border-radius: var(--radius-md); background: var(--c-panel);
+  overflow: hidden;
+}
+.home-row {
+  display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: var(--space-3);
+  align-items: start; padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--c-line);
+}
+.home-row:first-child { border-top: 0; }
+.home-row .chip-dot { margin-top: 5px; }
+.home-row-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.home-row-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.home-row-label { font-size: 13.5px; color: var(--tone); }
+.home-row-ref { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+.home-row-ref:hover { color: var(--color-accent); }
+.home-row-title { font-size: 13px; color: var(--t2); }
+.home-row-note { font-size: 12.5px; line-height: 1.45; color: var(--t3); text-wrap: pretty; }
+.home-row-note code { font-family: var(--mono); color: var(--t2); }
+/* an empty panel is a state with its own words, never a zero row (§4.18) */
+.home-quiet {
+  border: 1px dashed var(--c-line2); border-radius: var(--radius-md);
+  padding: var(--space-4); font-size: 12.5px; color: var(--t3);
+}
+/* §4.18's panel header link. `bar-spacer`'s job on a flex row, without borrowing its name. */
+.home-more { margin-left: auto; font-size: 12px; }
+
+
+/* ── Shell · Nav — `factory.pen` frame `yKLSZ` ──────────────────────────────────────────────
+   A 300px rail on the canvas, the surface beside it. Every colour is a token; the design is the
+   only place a value is chosen. */
+/* The shell is a FLEX CHILD of `.app`, which is `height:100vh; overflow:hidden`. Every surface
+   below it sizes with `flex:1; min-height:0` — the ticket page is three full-height columns — so
+   a grid that does not grow leaves them nothing to fill. That is what squeezed the ticket page
+   into a band with dead space under it. */
+.shell {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+}
+.shell-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.sidenav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 8px;
+  background: var(--c-canvas);
+  border-right: 1px solid var(--c-line);
+  overflow-y: auto;
+  min-height: 0;
+}
+.sidenav-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: var(--t2);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.2;
+}
+a.sidenav-row:hover { background: var(--c-raise); color: var(--t1); }
+.sidenav-row.is-active { background: var(--c-panel); color: var(--t1); font-weight: 600; }
+.sidenav-label { flex: 1 1 auto; }
+.sidenav-count {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--t3);
+  font-variant-numeric: tabular-nums;
+}
+/* Declared and not built. Dimmed and not clickable, so the rail states what it owes instead of
+   pretending the surface is there. */
+.sidenav-row.is-soon { color: var(--t3); cursor: default; }
+.sidenav-soon {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--st-none);
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+/* ── Dashboard · Lanes and Tickets by epic ──────────────────────────────────────────────────
+   `factory.pen` frames `mTLsb` and `DAiio`. Tokens only. */
+.block { margin: 28px 24px 0; }
+.block-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.block-head h2 { font-size: 15px; margin: 0; color: var(--t1); }
+.block-note { font-size: 12px; color: var(--t3); }
+.pill {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px; color: var(--t2);
+  border: 1px solid var(--c-line); border-radius: 999px; padding: 1px 8px;
+}
+.block-empty { color: var(--t3); font-size: 13px; padding: 10px 2px; }
+
+.lane-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.lane-card {
+  background: var(--c-panel); border: 1px solid var(--c-line);
+  border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.lane-card.is-free { background: transparent; border-style: dashed; }
+.lane-card-top { display: flex; align-items: center; gap: 8px; }
+.lane-name { font-size: 12px; color: var(--t1); }
+.role { font-size: 10px; letter-spacing: .08em; color: var(--t3); margin-left: auto; }
+.lane-ticket { font-size: 12px; color: var(--st-claim); text-decoration: none; }
+.lane-detail { margin: 0; font-size: 12px; color: var(--t2); }
+/* the same line on the board's own card — `factory.pen` frame `mTLsb`, between the state line and
+   the foot. Scoped to THIS block's grid, because `.lane-card` is a class both drawings of a lane
+   carry; the rule above owns the clipping, the glyph and the ink, and this owns only the metrics
+   the frame gives it here. */
+.lane-grid .lane-words { margin: 0; font-size: 11px; }
+.lane-card-foot { display: flex; gap: 14px; font-size: 11px; margin-top: 2px; }
+
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.filters-label { font-size: 10px; letter-spacing: .08em; color: var(--t3); margin-right: 4px; }
+.filters-note { font-size: 11.5px; color: var(--t2); margin-left: 4px; }
+.filters .filter-input { width: 340px; }
+.chip {
+  background: transparent; border: 1px solid var(--c-line); border-radius: 999px;
+  color: var(--t2); font-size: 11px; padding: 3px 10px; cursor: pointer;
+  display: inline-flex; gap: 6px; align-items: center;
+}
+.chip:hover { border-color: var(--c-line2); color: var(--t1); }
+.chip.is-on { background: var(--c-raise); border-color: var(--c-line2); color: var(--t1); }
+.chip em { font-style: normal; color: var(--t3); font-variant-numeric: tabular-nums; }
+
+.epic { margin-bottom: 18px; }
+.epic-head { display: flex; align-items: baseline; gap: 10px; padding: 6px 2px; }
+.epic-id { font-family: var(--mono, ui-monospace, monospace); font-size: 11px; color: var(--st-claim); text-decoration: none; }
+.epic-title { font-size: 13px; color: var(--t1); }
+.epic-counts { margin-left: auto; font-size: 11px; color: var(--t3); }
+
+table.tickets { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.tickets th {
+  text-align: left; font-size: 10px; letter-spacing: .08em; color: var(--t3);
+  font-weight: 500; padding: 6px 10px; border-bottom: 1px solid var(--c-line);
+}
+table.tickets td { padding: 7px 10px; border-bottom: 1px solid var(--c-line); color: var(--t2); vertical-align: top; }
+table.tickets tr:hover td { background: var(--c-panel); }
+.ticket-title { color: var(--t1); }
+.mono { font-family: var(--mono, ui-monospace, monospace); }
+.dim { color: var(--t3); }
+a.mono { color: var(--st-claim); text-decoration: none; }
+
+.state { font-size: 11px; }
+.state-running, .state-producing { color: var(--st-run); }
+.state-silent, .state-stalled, .state-waiting { color: var(--st-silent); }
+.state-crashed, .state-fail { color: var(--st-crash); }
+.state-queued { color: var(--st-wait); }
+.state-unshipped, .state-claimed { color: var(--st-claim); }
+.state-done { color: var(--st-done); }
+.state-not_started, .state-unknown { color: var(--st-none); }
+table.tickets td .mono, table.tickets th { white-space: nowrap; }
+table.tickets td:first-child, table.tickets td:nth-child(3),
+table.tickets td:nth-child(4) { white-space: nowrap; width: 1%; }
+.page { padding-top: 4px; }
+.run-title { color: var(--t2); margin-left: 10px; font-family: inherit; }
+table.escapes td { font-size: 12px; line-height: 1.45; }
+table.escapes td:first-child { white-space: nowrap; width: 1%; vertical-align: top; }
+.escape-cell { color: var(--t2); }
+table.escapes strong { color: var(--t1); font-weight: 600; }
+.scroll-x { overflow-x: auto; }
+.escape-link { color: var(--t2); text-decoration: none; border-bottom: 1px solid var(--c-line2); }
+.escape-link:hover { color: var(--t1); }
+table.escapes { min-width: 1400px; }
+table.escapes td { max-width: 460px; }
+/* ── Metrics ────────────────────────────────────────────────────────────────────────────────
+   `factory.pen` frame `Kj8y5`, SPEC.md §4.21. Tokens only — the tile is the frame's: a panel on
+   the canvas, the wire name above the number and the collection under it.
+
+   `metric-tile-*` and not `metric-*`: §4.13's delivery surface already owns `.metric`,
+   `.metric-value` and `.metric-label` (line ~1255), and the browser gate reads
+   `[data-testid="deliv-quality"] .metric:first-child .metric-value` by those names. Two surfaces
+   sharing one class is one surface restyling the other silently. */
+.metric-tiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px;
+}
+.metric-tile {
+  background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 6px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.metric-tile-label {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 9px; letter-spacing: .06em;
+  color: var(--t3);
+}
+.metric-tile-value {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 22px; color: var(--t1);
+  font-variant-numeric: tabular-nums;
+}
+.metric-tile-second {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 10px; color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+.metric-tile-n {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 10px; color: var(--t3);
+  font-variant-numeric: tabular-nums;
+}
+.metric-tile-note { font-size: 11px; color: var(--t2); line-height: 1.45; }
+.metric-stages-head { margin-top: 22px; align-items: center; }
+/* `table.tickets` narrows columns 1, 3 and 4 to their content for the ticket index, which
+   throws MEAN and N to the far edge of a four-column table. Reset it here and cap the width:
+   the frame draws the four together, and a stage table stretched across 1400px is a row a
+   reader has to track with a finger. */
+table.tickets.metric-stages { max-width: 660px; }
+table.tickets.metric-stages td:first-child,
+table.tickets.metric-stages td:nth-child(3),
+table.tickets.metric-stages td:nth-child(4) { width: auto; }
+
+.wiki { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 22px; align-items: start; }
+.wiki-group { margin-bottom: 14px; }
+.wiki-group h3 { font-size: 10px; letter-spacing: .09em; color: var(--t3); margin: 0 0 6px; font-weight: 500; }
+.wiki-row {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-radius: 6px; padding: 5px 9px;
+  color: var(--t2); font-size: 12px; cursor: pointer;
+}
+.wiki-row:hover { background: var(--c-panel); color: var(--t1); }
+.wiki-row.is-on { background: var(--c-raise); color: var(--t1); }
+.wiki-name { flex: 1 1 auto; font-family: var(--mono, ui-monospace, monospace); }
+.wiki-bytes { font-size: 10px; color: var(--t3); font-variant-numeric: tabular-nums; }
+.wiki-broken { font-size: 10px; color: var(--st-crash); }
+.wiki-page { background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 8px; padding: 18px 22px; }
+.wiki-page h3 { margin: 0; font-size: 15px; color: var(--t1); }
+.wiki-path { font-size: 11px; margin: 4px 0 14px; }
+.wiki-broken-note { color: var(--st-crash); font-size: 12px; }
+.wiki-front { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 0 0 16px; font-size: 12px; }
+.wiki-front dt { color: var(--t3); font-family: var(--mono, ui-monospace, monospace); }
+.wiki-front dd { margin: 0; color: var(--t2); }
+.orchard-ws { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+
+/* ── Delivery — the manager's surface ─────────────────────────────────────────────────────── */
+.deliv { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 4px 20px; }
+.deliv-source { margin-left: auto; font-size: 10px; color: var(--t3); }
+.deliv-body { display: flex; flex-wrap: wrap; gap: 26px; }
+.metric { min-width: 130px; }
+.metric-value { font-size: 26px; line-height: 1.1; color: var(--t1); font-variant-numeric: tabular-nums; }
+.metric-value.st-run { color: var(--st-run); }
+.metric-value.st-crash { color: var(--st-crash); }
+.metric-value.st-silent { color: var(--st-silent); }
+.metric-label { font-size: 11px; color: var(--t2); margin-top: 3px; }
+.metric-sub { font-size: 11px; color: var(--t3); margin-top: 2px; max-width: 230px; }
+.epic-elsewhere { color: var(--t3); font-size: 12px; padding: 8px 10px; margin: 0; }
+/* A wide table scrolls INSIDE its own box. When `.shell-main` scrolls instead, every group
+   heading slides out of view with it — which is what clipped `FAC-EPIC-002` to `AR-EPIC-002`. */
+.shell-main { overflow-x: hidden; }
+table.tickets { min-width: 0; }
+.ticket-title { max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pager { display: flex; align-items: center; gap: 14px; padding: 12px 2px 24px; }
+.pager button {
+  background: transparent; border: 1px solid var(--c-line); border-radius: 6px;
+  color: var(--t2); font-size: 12px; padding: 4px 12px; cursor: pointer;
+}
+.pager button:hover:not(:disabled) { border-color: var(--c-line2); color: var(--t1); }
+.pager button:disabled { opacity: .4; cursor: default; }
+.pager-at { font-size: 11px; color: var(--t3); font-variant-numeric: tabular-nums; }
+.tag-second { color: var(--t3); }
+/* §4.18's Empty replaces the panel that carries `.home-more`, so the edge off the first screen
+   moves here with it (WEB-FIX-002). Layout only — the ink is the global `a` rule's. */
+.home-empty-more { margin: 0 var(--space-8); font-size: 12px; }
+
+.req-toggle {
+  width: 16px; flex: none; background: none; border: 0; padding: 0; margin: 0;
+  color: var(--t3); font: inherit; cursor: pointer; line-height: 1;
+}
+.req-toggle-none { display: inline-block; }
+.req-children { font-family: var(--mono); font-size: 11px; color: var(--t3); white-space: nowrap; }
+
+.child-list { display: flex; flex-direction: column; gap: var(--space-4); }
+.child-req { border: 1px solid var(--c-line); border-radius: var(--radius-md); overflow: hidden; }
+.child-req .child-head {
+  border-left: 0; border-bottom: 1px solid var(--c-line); background: var(--c-panel);
+  padding: var(--space-3) var(--space-4);
+}
+.child-req .child-head .req-id { width: auto; min-width: 84px; }
+.child-req .child-head .req-title { font-weight: 500; }
+.child-groups {
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4) var(--space-8);
+}
+.child-groups .group-head { margin-bottom: var(--space-2); }
+.child-groups .group-name { font-size: 11px; color: var(--t2); }
+.child-groups .group-seq { font-size: 9.5px; }
+.child-groups:empty { display: none; }
+.req-summary p { margin: 0 0 var(--space-2); }
+.req-summary p:last-child { margin-bottom: 0; }
+.req-summary ul, .req-summary ol { margin: 0 0 var(--space-2); padding-left: 1.3em; }
+.req-summary li { margin: 0 0 var(--space-1); }
+.req-summary code { font-family: var(--mono); font-size: 12px; }

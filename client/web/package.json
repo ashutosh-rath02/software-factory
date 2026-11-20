@@ -1,0 +1,40 @@
+{
+  "name": "factory-client",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "preview": "vite preview",
+    "gen:types": "node scripts/gen-socket-types.mjs",
+    "gen:tokens": "node scripts/gen-tokens.mjs",
+    "gate": "bash gate/run-gate.sh",
+    "gate:tier3-333": "bash gate/run-tier3-333.sh",
+    "test:gate-exit": "bash gate/test-run-gate.sh",
+    "gen:api-types": "node scripts/gen-api-types.mjs",
+    "gen:inventory": "python3 design/ref/extract.py",
+    "gate:inventory": "python3 design/ref/check.py design/factory.pen design/ref/dashboard.dc.inventory.json design/ref/ticket.dc.inventory.json",
+    "export:pen": "node -e \"console.error('Export factory.pen\\\\u2019s variables to design/tokens.json through the Pencil MCP tools \\\\u2014 a .pen is encrypted and no script can open one. Then run npm run gen:tokens.'); process.exit(1)\""
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "2.1.7",
+    "markdown-it": "14.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.0.1",
+    "@types/markdown-it": "14.1.2",
+    "@types/node": "^26.1.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "jsdom": "^25.0.1",
+    "playwright-core": "1.49.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}

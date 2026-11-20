@@ -1,0 +1,244 @@
+/* SPEC.md §4.6 and §4.7 — the transcript and the composer, transcribed from
+   design/Ticket.dc.html. Line numbers in the comments are that file's, so a reviewer can
+   diff a rule against its source.
+
+   Its own file rather than more of app.css, for the same reason the tab row is a registry: four
+   client tickets are being built at once against WEB-FEAT-013's seam, and a stylesheet every one
+   of them appends to is a conflict every one of them has to resolve.
+
+   Every value here is a token. Not one colour is written literally — tests/theme.test.tsx reads
+   every file in this directory and fails the build on a hex literal or a colour function. */
+
+.session { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+.agent-selector {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  border: 1px solid var(--c-line); border-radius: var(--radius-md);
+  padding: var(--space-2); margin: 0 0 var(--space-2); min-width: 0;
+  color: var(--t2); font-size: 11px;
+}
+.agent-selector label { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.agent-selector select {
+  color: var(--t1); background: var(--c-panel); border: 1px solid var(--c-line);
+  border-radius: var(--radius-sm); padding: var(--space-1); max-width: 100%;
+}
+.agent-selector select:focus-visible { outline: 2px solid var(--color-accent); }
+.qa-start { display: flex; flex-direction: column; align-items: flex-start; }
+.qa-start .agent-selector { margin-bottom: var(--space-1); }
+.run-agent { display: block; color: var(--t2); font-size: 10px; overflow-wrap: anywhere; }
+
+/* ── 4.6 the transcript (:203-296) ─────────────────────────────────────────────────────────── */
+
+/* :203 — one scrolling region, and the column inside it is capped at the design's 900 px */
+.transcript {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: var(--space-4) var(--space-6) var(--space-8);
+  background: var(--c-canvas);
+}
+.transcript-column {
+  max-width: 900px; display: flex; flex-direction: column; gap: 2px;
+}
+
+/* :207 — the human panel: accent edge, YOU, the time, and a delivery mark */
+.entry-human {
+  background: var(--c-raise); border: 1px solid var(--c-line);
+  border-left: 2px solid var(--color-accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-3) var(--space-4); margin: var(--space-3) 0;
+}
+.entry-human-head {
+  display: flex; align-items: center; gap: var(--space-2); margin-bottom: 5px;
+}
+.entry-you {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--color-accent);
+}
+.entry-time { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.entry-mark { font-family: var(--mono); font-size: 10px; color: var(--tone); }
+.entry-human-body {
+  font-size: 13.5px; line-height: 1.6; color: var(--t1); text-wrap: pretty;
+  white-space: pre-wrap;
+}
+
+/* :240 — the only thing in the transcript that reads like prose */
+.entry-prose {
+  font-size: 13.5px; line-height: 1.68; color: var(--t1);
+  padding: var(--space-2) 0 var(--space-2) 2px; max-width: 76ch; text-wrap: pretty;
+  white-space: pre-wrap;
+}
+
+/* :245 — the collapsed tool line: chevron, outcome, tool, argument, duration */
+.entry-line {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 2px var(--space-3); margin-left: -8px;
+  border-radius: var(--radius-sm); cursor: pointer;
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.7; color: var(--t3);
+}
+.entry-line:hover { background: var(--c-panel); }
+.entry-outcome { display: inline-flex; color: var(--tone); }
+.entry-tool-name { color: var(--t2); flex: none; }
+.entry-tool-arg {
+  color: var(--t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.entry-tool-dur { color: var(--t3); flex: none; font-size: 10.5px; }
+
+/* :255 — the expansion: INPUT and RESULT, or (F13) the diff in place of both */
+.entry-panel {
+  margin: var(--space-1) 0 var(--space-3) var(--space-3);
+  border: 1px solid var(--c-line); border-radius: var(--radius-md);
+  background: var(--c-panel); overflow: hidden;
+}
+.entry-panel-label {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; color: var(--t3);
+  padding: var(--space-2) var(--space-3) var(--space-1);
+}
+.entry-panel-body, .entry-diff {
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.6; color: var(--t2);
+  padding: 0 var(--space-3) var(--space-3); white-space: pre-wrap; margin: 0;
+}
+.entry-diff { padding: var(--space-3); overflow-x: auto; }
+.entry-rule { height: 1px; background: var(--c-line); }
+
+/* :269 — the tool result: indented mono block with a left rule */
+.entry-result {
+  font-family: var(--mono); font-size: 11px; line-height: 1.55; color: var(--t3);
+  background: var(--c-panel); border-left: 1px solid var(--c-line2);
+  padding: var(--space-2) var(--space-3); margin: 3px 0 var(--space-2) var(--space-3);
+  white-space: pre-wrap; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* :273 — the crash block, shared by `error` and (F9) `isolation_refusal` */
+.entry-crash {
+  border: 1px solid var(--st-crash); border-left-width: 2px; background: var(--tint-crash);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-3) var(--space-4); margin: var(--space-2) 0;
+}
+.entry-crash-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--st-crash);
+  margin-bottom: 4px;
+}
+.entry-crash-body {
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.6; color: var(--t1);
+  white-space: pre-wrap; margin: 0;
+}
+
+/* :281 — the centred rule, used by `turn`, `stage` and (:290) `silence` */
+.entry-rule-row {
+  display: flex; align-items: center; gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
+}
+.entry-rule-line { height: 1px; flex: 1; background: var(--c-line); }
+.entry-rule-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--t3);
+}
+.entry[data-kind='silence'] .entry-rule-row { margin: var(--space-6) 0 var(--space-1); }
+.entry[data-kind='silence'] .entry-rule-line { background: var(--tone); opacity: .4; }
+.entry[data-kind='silence'] .entry-rule-label {
+  font-size: 10.5px; color: var(--tone); border: 1px solid var(--tone);
+  background: var(--tint-silent); border-radius: var(--radius-sm); padding: 3px 9px;
+}
+.entry-rule-note {
+  text-align: center; font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+}
+
+/* :219 / :230 — the rectangle: held, stopped, ended, killed, and (§8 D4) a permission request */
+.entry-rect {
+  border: 1px solid var(--c-line2); border-radius: var(--radius-md); background: var(--c-panel);
+  padding: var(--space-3) var(--space-4); margin: var(--space-3) 0;
+  display: flex; align-items: flex-start; gap: var(--space-3);
+}
+.entry-rect[data-toned='true'] { border-color: var(--tone); background: var(--tint); }
+.entry-rect-icon { color: var(--t2); margin-top: 1px; display: inline-flex; }
+.entry-rect[data-toned='true'] .entry-rect-icon { color: var(--tone); }
+.entry-rect-main { flex: 1; min-width: 0; }
+.entry-rect-title {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--t1);
+  margin-bottom: 4px;
+}
+.entry-rect[data-toned='true'] .entry-rect-title { color: var(--tone); }
+.entry-rect-body {
+  font-size: 12.5px; line-height: 1.6; color: var(--t2); text-wrap: pretty;
+}
+.entry-rect-aside {
+  font-family: var(--mono); font-size: 10.5px; color: var(--t3);
+  white-space: nowrap; padding-top: 2px;
+}
+.entry-rect[data-toned='true'] .entry-rect-aside { color: var(--tone); }
+
+.entry[data-kind='held'] .entry-rect { margin: 0 0 var(--space-3) 0; }
+
+/* §8 D4 — the request has no drawing; these are the design's own token shapes. The buttons are a
+   slot: WEB-FEAT-018 owns E23, and until it passes one in they are disabled rather than lying. */
+.entry-permission-summary { font-family: var(--mono); font-size: 11.5px; color: var(--t1); }
+.entry-permission-rule {
+  display: inline-block; margin-top: 4px;
+  font-family: var(--mono); font-size: 11px; color: var(--t2);
+  border: 1px solid var(--c-line2); border-radius: var(--radius-sm); padding: 1px 6px;
+}
+.entry-permission-buttons { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+.entry-permission-button {
+  font-family: var(--mono); font-size: 10.5px; color: var(--color-accent);
+  border: 1px solid var(--color-accent); background: transparent;
+  border-radius: var(--radius-sm); padding: 3px 9px; cursor: pointer;
+}
+.entry-permission-button:disabled {
+  color: var(--t3); border-color: var(--c-line2); cursor: not-allowed;
+}
+
+.entry-decision { font-family: var(--mono); font-size: 11px; color: var(--t3); padding: 2px 0; }
+
+/* ── 4.7 the composer (:347-372) ───────────────────────────────────────────────────────────── */
+
+.composer {
+  flex: none; border-top: 1px solid var(--c-line); background: var(--c-panel);
+  padding: var(--space-3) var(--space-6) var(--space-4);
+}
+.composer-idle { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+
+/* A send the lane refused — 409 wrong_state, most often. The words are back in the box and this
+   line is why they are, because a draft that reappears with no explanation reads like a bug. */
+.composer-refused {
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone);
+  margin-bottom: var(--space-2);
+}
+
+/* :348 — the held line, above the box, when anything is queued behind the turn */
+.composer-held {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-family: var(--mono); font-size: 10.5px; color: var(--tone);
+  margin-bottom: var(--space-2);
+}
+
+.composer-body { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* :354 — the textarea, 2 rows to 8 */
+.composer-draft {
+  width: 100%; resize: none; background: var(--c-raise); color: var(--t1);
+  border: 1px solid var(--c-line2); border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4); font-size: 13.5px; line-height: 1.55;
+  outline: none; font-family: var(--font-body);
+}
+.composer-draft:focus { border-color: var(--color-accent); outline: 2px solid transparent; }
+
+.composer-foot {
+  display: flex; align-items: center; gap: var(--space-4);
+  font-family: var(--mono); font-size: 10px; color: var(--t3);
+}
+.composer-cost { color: var(--t2); }
+
+/* :360 — ONE control, three jobs, ONE seat. The seat is an element of its own so that the button
+   cannot move: whatever it says, it is drawn in this box and no other. */
+/* One cell, every label in it: the cell is as wide as the widest, and the control fills the cell.
+   §4.7's `Stop` has to arrive exactly where the hand already is, and a seat that resizes with the
+   word is a seat that moves it. */
+.composer-seat { display: grid; flex: none; }
+.composer-seat > * { grid-area: 1 / 1; justify-content: center; }
+.composer-ghost { visibility: hidden; pointer-events: none; }
+.composer-button {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-family: var(--font-heading); font-weight: 500; font-size: 13px;
+  color: var(--tone); border: 1px solid var(--tone); background: transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2); border-radius: var(--radius-md);
+}
+.composer-button:hover { background: color-mix(in srgb, var(--tone) 12%, transparent); }
+.composer-button:active { background: color-mix(in srgb, var(--tone) 22%, transparent); }
+.composer-button:disabled { opacity: .45; cursor: not-allowed; background: transparent; }
