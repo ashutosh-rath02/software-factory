@@ -1,0 +1,3245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://factory.local/http.schema.json",
+  "contract": "factory-v0.1.0",
+  "title": "Factory HTTP responses",
+  "description": "The response bodies of the endpoints this contract's surfaces consume, as SPEC.md §5 specifies them. Every node carries `method` and `status` as well as `path`, because a path is not an address: `E26` is `POST /api/tickets/ids`, and the consumer that had only the path GET it, reached `GET /api/tickets/{id}` with `id` bound to the literal string `ids`, and judged E5's 404 against E26's shape (WEB-FIX-213). `checked_by` is on the nodes the browser gate's schema sweep cannot reach from a cold fixture — their paths name a run or a lane that does not exist yet — and it names the section that reaches them instead, so the set of nodes nobody sweeps cannot grow by one line. The client's types are generated from this file and never hand-written, and the browser gate validates the REAL server's responses against it — so a schema that drifts from the C++ turns a gate red instead of blanking a screen. Only the endpoints this contract's surfaces consume are here; the rest arrive with the tickets that serve them. Every object is open: the server may add a field, and a client that refuses one is a client that breaks on an additive change the epic explicitly allows.",
+  "$defs": {
+    "startRunRequest": {
+      "title": "StartRunRequest",
+      "description": "E18's optional start fields. Agent and model name manifest-declared choices; executable paths, credentials and provider transport stay server-owned. Omitting agent selects default_agent; omitting model selects that profile's default; omitting effort resolves role, then run_effort, then the profile default. Legacy singular-agent manifests retain their established defaults.",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string"
+        },
+        "resume": {
+          "type": "boolean",
+          "default": true
+        },
+        "agent": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "tree": {
+          "type": "string",
+          "description": "Optional declared tree preset; omission selects default_tree or implicit off."
+        },
+        "effort": {
+          "type": "string",
+          "description": "One of the selected profile's declared `efforts`. Omitted selects the lane's role effort, then `run_effort`, then that profile's `default_effort`, then nothing. A value the profile does not declare, an empty string, and an effort asked of a profile that declares none are `400 invalid_agent_selection` BEFORE the spawn: the real `claude` answers an undeclared level with a warning on stderr and runs at its default, so a refusal that is not the tool's is nobody's."
+        }
+      }
+    },
+    "state": {
+      "title": "State",
+      "description": "The three axes, never flattened (SPEC.md §3.2). `motion` is null on a document with no lane behind it, which is every document until SRV-FEAT-011.",
+      "type": "object",
+      "required": [
+        "evidence",
+        "motion",
+        "process"
+      ],
+      "properties": {
+        "process": {
+          "type": "string"
+        },
+        "motion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "string"
+        }
+      }
+    },
+    "delivery": {
+      "title": "Delivery",
+      "description": "What git and the lane set the tool owns say became of this ticket's work (SPEC.md §3.5). Derived, never read from the document: `state` is the answer, `claimed` is what the document said, and `disagrees` is true when the two cannot both be right — which is the most valuable thing on the row. `reason` is set only when `state` is `unknown`.",
+      "type": "object",
+      "required": [
+        "state",
+        "detail",
+        "claimed",
+        "disagrees",
+        "needs_you"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "not_started",
+            "running",
+            "stalled",
+            "unshipped",
+            "waiting",
+            "done",
+            "unknown"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        },
+        "claimed": {
+          "type": "string"
+        },
+        "disagrees": {
+          "type": "boolean"
+        },
+        "needs_you": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "needsYou": {
+      "title": "NeedsYou",
+      "description": "The pill's own count and its text, computed server-side so the list and the counter cannot drift apart (SPEC.md E3).",
+      "type": "object",
+      "required": [
+        "count",
+        "label"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "stage": {
+      "title": "Stage",
+      "description": "Where a ticket is in its own sequence. `total` is that sequence's length and nothing else — progress is only comparable inside a group. `name` is the stage the `index` points at, `\"\"` when nothing has been reported yet: the socket's own stage object has carried it since the contract was written, and E29 filters and facets by that word, so both halves of the wire now say it rather than leaving a surface to recompute it from an index and a sequence it fetched separately (SRV-FEAT-311). Additive: the member is optional and no existing consumer reads it.",
+      "type": "object",
+      "required": [
+        "index",
+        "total",
+        "round",
+        "of",
+        "source"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "round": {
+          "type": "integer"
+        },
+        "of": {
+          "type": "integer"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "warning": {
+      "title": "Warning",
+      "description": "A fact about the repository, not an error state: a missing directory is a manifest mistake and the screen says which path. `code` is what a surface reads to decide whether this EXPLAINS an empty list (`invalid_manifest`) or annotates a populated one (`path_missing`). `command_unrunnable` (SRV-FIX-202) annotates a workspace whose declared `build`, `gate` or `review` (SRV-FEAT-500) names a program nothing a lane claimed for it is given provides: `pointer` is `/workspaces/<name>/<key>`, `field` is the manifest key a person edits and `program` is the word that was not found. The manifest loads and the lane is claimed — this is the only notice before that lane reaches GATE. `unaccountable_worktree` (SRV-FIX-432) annotates E9: one entry directly under the lane root that a restart could not adopt as a lane — not a registered worktree of this repository, or one whose branch is outside `ticket/*`. `path` is that entry, absolute. It is a fact about the lane root and never an error: nothing was created, moved, pruned or removed to produce it, and `E13` remains the only path that removes anything. Every entry under the lane root is either a row in `lanes` or one of these, so the deletion rule `S5` states can be answered from E9 alone. `unknown_parent` (SRV-FEAT-547) annotates E3 and E4: a requirement's `parent:` names no requirement in any declared repository — `id` is that requirement and `value` is the word it wrote. `parent_cycle` (SRV-FEAT-547) is one entry per cycle, `ids` naming its members in the order the walk found them. Both leave every requirement involved at the top level and the response at 200: an unresolvable link is a fact about the repository's documents, never an error state, and the screen is never blank.",
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "pointer": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "program": {
+          "type": "string",
+          "description": "The word a command names that nothing a lane is given provides. Present on `command_unrunnable` and on nothing else."
+        },
+        "id": {
+          "type": "string",
+          "description": "The requirement whose `parent:` could not be resolved. Present on `unknown_parent` and on nothing else."
+        },
+        "value": {
+          "type": "string",
+          "description": "The `parent:` value that resolved to nothing. Present on `unknown_parent` and on nothing else."
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The members of one `parent:` cycle, in the order the walk found them. Present on `parent_cycle` and on nothing else."
+        }
+      }
+    },
+    "requirementRow": {
+      "title": "RequirementRow",
+      "description": "One row of 4.2: id, state dot, title, the needs pill, one tag per workspace it touches, status and last-updated. `parent` and `children` are the tree (SRV-FEAT-547): the array this row lives in is FLAT and carries every requirement, and a surface resolves each `children` id against that array. A TOP-LEVEL row is one whose `parent` is `\"\"` — a requirement that names a parent is drawn under it and never at the top, and a `children` id the body does not carry is a row a surface draws at the top rather than a crash.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "status",
+        "updated_iso",
+        "path",
+        "workspaces",
+        "state",
+        "delivery",
+        "needs_you",
+        "ticket_count",
+        "parent",
+        "children",
+        "own_ticket_count"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string",
+          "description": "The id of the requirement this one hangs under, resolved BY ID across every repository the manifest declares, and `\"\"` when it names none, names one that is not on disk (`unknown_parent`) or is in a cycle (`parent_cycle`). The link lives on the child; a requirement never lists its children in its own text, so only one of the two can be wrong at a time (SPEC.md §2)."
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The ids of this requirement's DIRECT children, in the order the documents are listed. Ids and not objects: each one is a row of this same array, so a surface reads the child's own title, counts and delivery from the row rather than from a second copy that could disagree with it."
+        },
+        "updated_iso": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "needs_you": {
+          "$ref": "#/$defs/needsYou"
+        },
+        "ticket_count": {
+          "type": "integer",
+          "description": "The ROLL-UP: tickets naming this requirement plus every ticket under every descendant of it. `own_ticket_count` is this requirement's own. Every other aggregate on the row — `state`, `delivery`, `needs_you`, `workspaces` — is over the same rolled-up set, which is why `?filter=needs` and `?filter=done` weigh a requirement by what is beneath it."
+        },
+        "own_ticket_count": {
+          "type": "integer",
+          "description": "Tickets whose own `parent:` names THIS requirement, in its own repository — what `ticket_count` meant before SRV-FEAT-547. It is the only number on the row that is not rolled up, and it is what a surface draws beside the requirement's own tickets."
+        },
+        "parse_error": {
+          "type": "string"
+        }
+      }
+    },
+    "ticketRow": {
+      "title": "TicketRow",
+      "description": "One ticket inside a workspace group: id, dot, title, state, stage N/M, lane and cost.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "status",
+        "state",
+        "delivery",
+        "stage",
+        "needs_you",
+        "lane",
+        "cost_usd"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "stage": {
+          "$ref": "#/$defs/stage"
+        },
+        "needs_you": {
+          "type": "boolean"
+        },
+        "lane": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "parse_error": {
+          "type": "string"
+        }
+      }
+    },
+    "group": {
+      "title": "Group",
+      "description": "One workspace's tickets, carrying the stage sequence its own tickets declared. A ticket naming a workspace the manifest does not declare lands in a final group called `unassigned` rather than disappearing.",
+      "type": "object",
+      "required": [
+        "workspace",
+        "stage_sequence",
+        "count",
+        "tickets"
+      ],
+      "properties": {
+        "workspace": {
+          "type": "string"
+        },
+        "stage_sequence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stage_sequence_source": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "tickets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ticketRow"
+          }
+        }
+      }
+    },
+    "extra": {
+      "title": "Extra",
+      "description": "One of the manifest's `display.ticket_fields`, label and value, passed through untouched. The tool does not know what any of them mean.",
+      "type": "object",
+      "required": [
+        "label",
+        "value"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "title": "Evidence",
+      "description": "Derived, never reported: a report exists (claimed), and it contains the string of a run id the tool assigned (proven).",
+      "type": "object",
+      "required": [
+        "verdict"
+      ],
+      "properties": {
+        "verdict": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        }
+      }
+    },
+    "runs": {
+      "title": "Runs",
+      "description": "What a ticket's runs add up to (E5). SPEC.md §4.5's identity row reads all three — `4 runs · 18m 40s · $1.86` — so they are typed rather than an untyped object the screen has to guess at.",
+      "type": "object",
+      "required": [
+        "count",
+        "duration_s",
+        "cost_usd"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "duration_s": {
+          "type": "number"
+        },
+        "cost_usd": {
+          "type": "number"
+        }
+      }
+    },
+    "motion": {
+      "title": "Motion",
+      "description": "A LANE's motion axis (E9, M2). Deliberately not the string `$defs/state` carries: a row on a list says whether anything is arriving, and a lane card has to say how long nothing has been. `since` is what the client's clock ticks from, so a quiet socket does not freeze it (SPEC.md §4.4).",
+      "type": "object",
+      "required": [
+        "value",
+        "silent_for_s",
+        "since"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "silent_for_s": {
+          "type": "integer"
+        },
+        "since": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "laneState": {
+      "title": "LaneState",
+      "description": "The three axes of a lane, never flattened (SPEC.md §3.2). `alarm` is not a summary of them — it names which two of the nine combinations carry a border, which is a fact about the pair and not a rank. `blocked` is set only while a person is being asked.",
+      "type": "object",
+      "required": [
+        "evidence",
+        "motion",
+        "process",
+        "stopped"
+      ],
+      "properties": {
+        "process": {
+          "type": "string"
+        },
+        "motion": {
+          "$ref": "#/$defs/motion"
+        },
+        "evidence": {
+          "type": "string"
+        },
+        "stopped": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "SRV-FEAT-415 — why this lane's round is over and since when, or null while it is still going. `process` cannot answer it: `idle` means the agent's process is alive and its turn is over, so an agent that FINISHED and one that stopped to ask a question are one value. `reason` is `work_landed` (the work is on the base branch, nothing is left in the lane), `holds_work` (commits nobody else can see — releasing this lane would strand them), `crashed`, `never_started`, or `ended`.",
+          "required": [
+            "reason",
+            "seconds",
+            "since"
+          ],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "enum": [
+                "work_landed",
+                "holds_work",
+                "crashed",
+                "never_started",
+                "ended"
+              ]
+            },
+            "seconds": {
+              "type": "integer",
+              "description": "How long it has been stopped. A boolean cannot tell four minutes from four days, and a lane sat for 356 of them unnoticed."
+            },
+            "since": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "ISO-8601, or null if it never ran."
+            }
+          }
+        },
+        "blocked": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "alarm": {
+          "type": "boolean"
+        }
+      }
+    },
+    "laneStage": {
+      "title": "LaneStage",
+      "description": "Where a LANE is in its ticket's sequence. Three fields, not `$defs/stage`'s five: `of` and `source` are the document's answer and reach the screen through E5, while the rail draws a bar and a name. `index` and `total` are both positions in the TICKET's own sequence — the manifest's only when the ticket declares none — so a ticket of eight stages is out of eight, never out of the manifest's ten.",
+      "type": "object",
+      "required": [
+        "index",
+        "total",
+        "round"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "round": {
+          "type": "integer"
+        }
+      }
+    },
+    "waitingFor": {
+      "title": "WaitingFor",
+      "description": "Why a lane is `queued`: the exclusive resource it needs, who holds it, and its place in the queue. SPEC.md §4.4 draws a queued card with its position, so the position is on the wire rather than derived in the browser.",
+      "type": "object",
+      "required": [
+        "resource",
+        "held_by",
+        "holder_alive",
+        "position"
+      ],
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "held_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "holder_alive": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "SRV-FEAT-180 — whether the lane holding it is running. `false` is the whole difference between an ordinary queue and a queue on a corpse, and it is on the queued lane's own card because that is the card somebody is reading while they wait."
+        },
+        "position": {
+          "type": "integer"
+        }
+      }
+    },
+    "lastWords": {
+      "title": "LastWords",
+      "description": "FAC-EPIC-373 — what the agent in a lane last SAID or last CALLED, as one line. The three kinds are the agent's own utterances and nothing else: `tool_result` is what the tool said back, and `turn` and `error` are the tool's bookkeeping, so none of them moves it. `text` is the first non-empty line of a `prose` block clipped to 160 code points with a trailing `…`, the tool's name for a `tool`, and the tool's name, one space and the path the transcript carries for a `file_edit`. It is never rewritten by the client. Derived in `app/agent/transcript`, which is the only module that may read a CLI frame (MODEL.md S6).",
+      "type": "object",
+      "required": [
+        "kind",
+        "text",
+        "at"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "prose",
+            "tool",
+            "file_edit"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string",
+          "description": "The server's clock when the entry was parsed. UTC, second resolution, monotonic within a run — the same shape every other timestamp on this wire has."
+        }
+      }
+    },
+    "lane": {
+      "title": "Lane",
+      "description": "One lane: a worktree, a branch, a seat, and possibly one exclusive resource held (SPEC.md §3.1). `progress_pct` is the share of the ticket's own stage sequence that is FINISHED — `(stage.index - 1) * 100 / stage.total`, integer, floored at 0, because the stage last reported is the one in progress — and `100` once the ticket's `status:` is one the manifest declares under `status.done` (SRV-FIX-599). `remaining_s` is the seconds the stages still ahead are expected to take, measured: the median duration of each one in this workspace's finished stages, minus the time already spent in the current one. A stage nobody in the workspace ever measured adds nothing; the answer is `null` when a stage ahead has only one or two measurements or when none ahead has any, so it is never a guess, and `0` when the ticket is done.",
+      "type": "object",
+      "required": [
+        "lane",
+        "ticket_id",
+        "workspace",
+        "role",
+        "branch",
+        "worktree",
+        "state",
+        "needs_you",
+        "stage",
+        "progress_pct",
+        "remaining_s",
+        "elapsed_s",
+        "cost_usd",
+        "last_words",
+        "resources_held"
+      ],
+      "properties": {
+        "lane": {
+          "type": "string"
+        },
+        "ticket_id": {
+          "type": "string"
+        },
+        "workspace": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "worktree": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/laneState"
+        },
+        "needs_you": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "stage": {
+          "$ref": "#/$defs/laneStage"
+        },
+        "progress_pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "remaining_s": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "elapsed_s": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "last_words": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/lastWords"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null` until the current run's first qualifying entry, and `null` again for a new run — reset where `run_id` is set (E18). Not persisted: after a restart a live lane reads `null` until its next entry. REQUIRED and nullable rather than optional, so a server that forgets to serve it is red in the browser gate's §6b instead of silently absent (docs/operations/ESCAPES.md 2026-09-05, SRV-FEAT-415)."
+        },
+        "run_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "session_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resources_held": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "waiting_for": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    },
+    "resource": {
+      "title": "Resource",
+      "description": "An exclusive resource and who is waiting for it. The board is one of these: two lanes cannot flash it at once, so the second is `queued` and the queue is on the wire rather than inferred.",
+      "type": "object",
+      "required": [
+        "name",
+        "exclusive",
+        "description",
+        "held_by",
+        "holder_alive",
+        "queue"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "exclusive": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "held_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "holder_alive": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "SRV-FEAT-180 — whether the holder's process is running, asked of its pid and never of a process name. `null` when `held_by` is null. A resource whose holder is not alive is held for ever, and the only call that freed it destroyed the holder's session and checkout to do it — so the state has to be visible before somebody waits on it. Derived at read time, like `worktree_missing`: nothing delivers an event when a process somewhere else dies, so M8, which is an edge, does not carry it and this read does."
+        },
+        "queue": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "seats": {
+      "title": "Seats",
+      "description": "How many agent seats this host declared and how many are taken. A lane needs one, so this is the other thing that can make a claim wait.",
+      "type": "object",
+      "required": [
+        "host"
+      ],
+      "properties": {
+        "host": {
+          "type": "object",
+          "required": [
+            "total",
+            "used"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "used": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "role": {
+      "title": "Role",
+      "description": "F31 — a role the tool started for this ticket, or one queued for a seat. `lane` and `run_id` exist only once it has been given one, and `pending` means queued rather than dropped: it is a fact drawn quietly, and none of SPEC.md §3.3's clauses, so it never enters the `needs you` count.",
+      "type": "object",
+      "required": [
+        "role",
+        "stage",
+        "state"
+      ],
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "started"
+          ]
+        },
+        "lane": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        }
+      }
+    },
+    "remedy": {
+      "title": "Remedy",
+      "description": "SPEC.md §3.6 — the action that ends the state this error describes. It travels INSIDE the failure that needs it, never in a second call: a remedy that arrives separately from its failure is a remedy that can be missing at the moment the failure is shown. `action` is a verb from §9.2's closed set and nothing else, so a server that invents one is a schema failure rather than a blank button; `target` is what the verb acts on, so the client builds the call from the remedy instead of re-deriving it from the code; `destroys` names what is lost from §9.3's nouns and is `[]` when nothing is, which is what makes *no failure's only remedy destroys work* checkable; `confirm` is present when the action needs a human sentence before it fires, and whether to confirm is the server's statement about consequence, not a client's taste. §11's check 12 holds all of it.",
+      "type": "object",
+      "required": [
+        "action",
+        "label",
+        "destroys"
+      ],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "retry",
+            "reload_manifest",
+            "claim_lane",
+            "open_lane",
+            "start_run",
+            "end_session",
+            "kill_run",
+            "recover_lane",
+            "release_lane",
+            "discard_ignored",
+            "release_resource"
+          ]
+        },
+        "target": {
+          "type": "object"
+        },
+        "label": {
+          "type": "string"
+        },
+        "destroys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "turn",
+              "session",
+              "worktree",
+              "ignored_files"
+            ]
+          }
+        },
+        "confirm": {
+          "type": "string"
+        }
+      }
+    },
+    "errorBody": {
+      "title": "ErrorBody",
+      "description": "SPEC.md §5's one error shape. A thing that does not exist is 404 with `detail.path` naming where the tool looked — nine of ten of those are a manifest pointing at the wrong directory. `remedy` is §3.6's: the action that ends this state, offered by the failure that needs it. `null` is legal only for a code named in §11 check 12's exemption table, with its reason — a silent null is a red gate.",
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "code"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "object"
+            },
+            "remedy": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/remedy"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "runUsage": {
+      "title": "RunUsage",
+      "description": "Provider cumulative token totals saved in run meta. Effective tokens are uncached input plus one tenth of cached input plus output. Older runs may have no usage.",
+      "type": "object",
+      "required": ["input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "effective_tokens"],
+      "properties": {
+        "input_tokens": {"type": "integer", "minimum": 0},
+        "cached_input_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "reasoning_output_tokens": {"type": "integer", "minimum": 0},
+        "effective_tokens": {"type": "number", "minimum": 0}
+      }
+    },
+    "runRow": {
+      "title": "RunRow",
+      "description": "One row of E7 — a run as its own `meta.json` recorded it, which is why it outlives the process that made it (F6) and survives its transcript being cleaned. `outcome` is the record's six words, the same six E31's `runIndexRow` carries — one record, one vocabulary. The sixth is `orphaned`, which F6's settle writes over `running` when nothing is behind the record any more, and it is a word only a RECORD can hold: `M11 run` is published from a live run and names five, because a settled run has no process left to publish from (SRV-FIX-344). §4.10's six are a different six — the client's reading of the terminal words, because `completed` splits on §3.4's evidence.",
+      "type": "object",
+      "required": [
+        "run_id",
+        "n",
+        "started_iso",
+        "ended_iso",
+        "outcome",
+        "stage",
+        "duration_s",
+        "cost_usd",
+        "lane",
+        "session_id",
+        "tree"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "n": {
+          "type": "integer"
+        },
+        "started_iso": {
+          "type": "string"
+        },
+        "ended_iso": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "running",
+            "ended cleanly",
+            "killed by you",
+            "completed",
+            "crashed",
+            "orphaned"
+          ]
+        },
+        "stage": {
+          "type": "integer"
+        },
+        "duration_s": {
+          "type": "number"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "usage": {
+          "$ref": "#/$defs/runUsage"
+        },
+        "lane": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "cost_known": {
+          "type": "boolean"
+        },
+        "tree": {
+          "$ref": "#/$defs/runTree"
+        },
+        "effort": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "A reasoning effort in the PROVIDER's own words, as the launch actually sent it: `--effort <level>` on the Claude argv, `effort` on every codex `turn/start`. `null` is a run that carried none — a profile declaring no `efforts`, and every record written before this field existed. It is never the tool's guess at what the provider would have defaulted to, because the provider's default is not a thing the tool can see."
+        }
+      }
+    },
+    "runIndexRow": {
+      "title": "RunIndexRow",
+      "description": "One row of E31 — E7's row plus the three a repository-wide list needs and a per-ticket one does not: `ticket_id`, `ticket_title` and `kind`. It is read out of the run's own `meta.json`, so it outlives the process that made it (F6) and survives its transcript being cleaned — the row is the record and the log is the evidence, and E8 answering 404 for it is §4.10's sentence rather than this list's problem. `kind` is the role the run was started for, from the manifest's `roles` (F31), and `run` for one nobody declared a role for: the manifest's word, never the tool's, which is why it is a bare string here and not an enum. `ended_iso` is ABSENT while a run is live — not null, not the start time — and `duration_s` is then measured to now. `outcome` is `runRow`'s six words exactly — this list and the ticket's own tab describe one record with one vocabulary, and `orphaned` is the one F6's settle writes over `running` when nothing is behind the record any more.",
+      "type": "object",
+      "required": [
+        "run_id",
+        "n",
+        "kind",
+        "ticket_id",
+        "ticket_title",
+        "lane",
+        "stage",
+        "outcome",
+        "started_iso",
+        "duration_s",
+        "cost_usd",
+        "session_id",
+        "tree"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "n": {
+          "type": "integer"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "ticket_id": {
+          "type": "string"
+        },
+        "ticket_title": {
+          "type": "string"
+        },
+        "lane": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "integer"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "running",
+            "ended cleanly",
+            "killed by you",
+            "completed",
+            "crashed",
+            "orphaned"
+          ]
+        },
+        "started_iso": {
+          "type": "string"
+        },
+        "ended_iso": {
+          "type": "string"
+        },
+        "duration_s": {
+          "type": "number"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "cost_known": {
+          "type": "boolean"
+        },
+        "tree": {
+          "$ref": "#/$defs/runTree"
+        },
+        "effort": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "A reasoning effort in the PROVIDER's own words, as the launch actually sent it: `--effort <level>` on the Claude argv, `effort` on every codex `turn/start`. `null` is a run that carried none — a profile declaring no `efforts`, and every record written before this field existed. It is never the tool's guess at what the provider would have defaulted to, because the provider's default is not a thing the tool can see."
+        }
+      }
+    },
+    "transcriptEntry": {
+      "title": "TranscriptEntry",
+      "description": "One replayed transcript entry. Its kinds and payloads are SPEC.md §4.6's table and belong to the module that parses the agent's output; this types only what every kind carries, exactly as socket.schema.json's `entry` does.",
+      "type": "object",
+      "required": [
+        "seq",
+        "kind"
+      ],
+      "properties": {
+        "seq": {
+          "type": "integer"
+        },
+        "ts": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        }
+      }
+    },
+    "diffFile": {
+      "title": "DiffFile",
+      "description": "One changed file. `committed` is false for work that is only in the worktree — a person deciding whether to keep a lane has to see that too, so a diff of commits alone would answer the wrong question.",
+      "type": "object",
+      "required": [
+        "path",
+        "status",
+        "added",
+        "removed",
+        "committed"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "added": {
+          "type": "integer"
+        },
+        "removed": {
+          "type": "integer"
+        },
+        "committed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "diffCommit": {
+      "title": "DiffCommit",
+      "description": "One commit the lane made on its own branch, with the subject a person wrote and the sha they would check out.",
+      "type": "object",
+      "required": [
+        "sha",
+        "subject",
+        "iso"
+      ],
+      "properties": {
+        "sha": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "iso": {
+          "type": "string"
+        }
+      }
+    },
+    "diffTotals": {
+      "title": "DiffTotals",
+      "description": "What the lane adds up to, summed by the server so the DIFF tab's count and its rows cannot disagree.",
+      "type": "object",
+      "required": [
+        "files",
+        "added",
+        "removed",
+        "commits"
+      ],
+      "properties": {
+        "files": {
+          "type": "integer"
+        },
+        "added": {
+          "type": "integer"
+        },
+        "removed": {
+          "type": "integer"
+        },
+        "commits": {
+          "type": "integer"
+        }
+      }
+    },
+    "permissionRule": {
+      "title": "PermissionRule",
+      "description": "One standing rule — E11 lists them and M12 broadcasts the same six fields, so the client holds one type for both. `source` is `manifest` or `granted`, and it is the whole of the difference between the two kinds: a rule declared in the manifest is a committed file's, cannot be revoked from a UI, and has a null `granted_iso` because it was declared and never granted. `match_count` lives for the life of the tool process and is deliberately not persisted — a policy file rewritten on every match is a file with a permanent diff.",
+      "type": "object",
+      "required": [
+        "rule_id",
+        "pattern",
+        "source",
+        "granted_iso",
+        "match_count",
+        "revocable"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "granted_iso": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "match_count": {
+          "type": "integer"
+        },
+        "revocable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "deliveryCount": {
+      "title": "DeliveryCount",
+      "description": "One cell of §4.18's `Where the work is` row: a `delivery` value (SPEC.md §3.5) and how many of this repository's tickets are in it. `E30` serves one entry per value IN §3.5's TABLE ORDER, including the values whose count is zero — a row of counts that omits its empty members is a row whose shape changes under the reader. It is one axis and not a pipeline: the design's nine steps mix a lane's `process`, a role's state and delivery into one line, which is §3.2's rule broken in the one place a person most wants it broken.",
+      "type": "object",
+      "required": [
+        "state",
+        "count"
+      ],
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        }
+      }
+    },
+    "needsYouRow": {
+      "title": "NeedsYouRow",
+      "description": "One ticket that needs a person, and WHY: `clauses` are §3.3's seven conditions by the names `E9` already uses for the same facts — a second vocabulary for them is two places the states drift. `detail` is §3.3's own sentence for the clauses that fired, so the row says why rather than drawing an alarm. `remedy` is §3.6's object or `null`, and a `null` here is ordinary: most of §3.3's clauses end when a person reads something, not when the tool acts. A ticket satisfying three clauses is ONE row and one unit of somebody's attention.",
+      "type": "object",
+      "required": [
+        "ticket_id",
+        "title",
+        "clauses",
+        "detail",
+        "remedy"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "clauses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "blocked",
+              "crashed",
+              "claimed_unproven",
+              "silent",
+              "stalled",
+              "unshipped"
+            ]
+          }
+        },
+        "detail": {
+          "type": "string"
+        },
+        "remedy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/remedy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lane": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "unpushedRow": {
+      "title": "UnpushedRow",
+      "description": "A ticket whose work exists and has never left this machine: `delivery` is `unshipped` with commits no remote has (SPEC.md §3.5 rule 3). `commits` is how many are ahead of the base branch, and `age_s` is how long the OLDEST of them has been sitting here — the panel's job is that nobody discovers a week of work living on one laptop, and the newest commit's age cannot answer that. Seconds, formatted by the client. IT NAMES THEM AND DOES NOT PUSH THEM: the row carries no remedy, because §3.5's read-only property is six git subcommands served at `E1` so it can be asserted, and one write verb here would end that guarantee for the whole product in exchange for one button (§4.18).",
+      "type": "object",
+      "required": [
+        "ticket_id",
+        "title",
+        "branch",
+        "commits",
+        "age_s"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "commits": {
+          "type": "integer"
+        },
+        "age_s": {
+          "type": "integer"
+        }
+      }
+    },
+    "homeTicketRow": {
+      "title": "HomeTicketRow",
+      "description": "One ticket with the axes SPEC.md §3.2b's nine predicates read, carried in E30's same one read. THE AXES AND NEVER THE CELL: no member here holds §3.2b's ten values, because the flattening is the client's one derived presentation axis and a server that served it would be the second definition §3.2b constraint 3 forbids — a surface that recomputes it is a second answer to one question, and so is a server that answers it first. `status` is the document's own claim and `delivery` is what git says, both carried, exactly as §4.17's row carries both. `verdict` and `escaped` are the two facts git does not carry and §3.5b is where each is read: `verdict` is `pass` or `fail` only when a verdict document exists beside the ticket's report AND the document claims one of those two words, and `null` otherwise — a claim nobody else wrote down is a claim, not a verdict. `escaped` is a row of the ledger `docs.escapes` names carrying this ticket's id; a repository that declares no ledger answers `false` everywhere, because no ledger and no row are the same answer to *does a row name this*.",
+      "type": "object",
+      "required": [
+        "ticket_id",
+        "title",
+        "lane",
+        "role",
+        "state",
+        "delivery",
+        "status",
+        "verdict",
+        "escaped"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "lane": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The role the lane holding this ticket was claimed in — the manifest's word (`roles.<name>`, F31) and never the tool's. `null` when no lane holds the ticket AND when the lane that holds it was claimed in no declared role; `lane` is what tells those two apart, and a null `role` over a non-null `lane` is the ordinary run nobody declared a role for. §3.2b reads this to tell an agent's run from the check of that run, which are two different answers to *what is happening to this ticket*."
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "status": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "escaped": {
+          "type": "boolean"
+        }
+      }
+    },
+    "laneOccupancy": {
+      "title": "LaneOccupancy",
+      "description": "How many lane seats this host declared and how many are taken, at the instant the rest of this answer was read. The same two numbers `E9` serves as `seats.host`, carried here so §4.18's three panels and the count beside them come out of one read rather than out of a second request that can disagree.",
+      "type": "object",
+      "required": [
+        "occupied",
+        "total"
+      ],
+      "properties": {
+        "occupied": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "owner": {
+      "title": "Owner",
+      "description": "Who has touched this ticket (SPEC.md §4.17). `source` states where the answer came from and is the whole point of the object: `commits` means the author of the commits the ticket's branch holds that the base branch does not — read with `rev-list`, one of §3.5's six read-only subcommands, and the most frequent author of them — and `document` means there are no such commits and the value is the `owner` field `display.ticket_fields` named, passed through untouched. A branch already merged into the base holds no commits the base does not, so a merged ticket falls back to the document exactly as an unstarted one does; the tool does not reconstruct which side of a merge a commit came from. A ticket with neither has NO owner and the member is absent rather than an empty string: nobody has touched this and somebody wrote a blank are different facts.",
+      "type": "object",
+      "required": [
+        "name",
+        "source"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "commits",
+            "document"
+          ]
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "facet": {
+      "title": "Facet",
+      "description": "One value a filter can take and how many tickets in the WHOLE repository carry it — never how many are on the page. A facet computed over the window reports one set of stages on page one and a different set on page two for the same repository, while every assertion about the rows passes (WEB-FIX-091).",
+      "type": "object",
+      "required": [
+        "value",
+        "count"
+      ],
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        }
+      }
+    },
+    "facets": {
+      "title": "Facets",
+      "description": "The two axes §3.2 forbids flattening, counted separately. `provenance` takes `delivery.state`'s own values (§3.5) and `stage` the stage names tickets have actually reached, with `not_started` for the ones that have reached none. Both are counted over every ticket matching `q`, BEFORE the `provenance` and `stage` filters and before the page window — so a facet says what clicking it would give rather than what is already selected, while `total` stays the filtered total.",
+      "type": "object",
+      "required": [
+        "provenance",
+        "stage"
+      ],
+      "properties": {
+        "provenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/facet"
+          }
+        },
+        "stage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/facet"
+          }
+        }
+      }
+    },
+    "appliedFilters": {
+      "title": "AppliedFilters",
+      "description": "What the server actually applied, echoed so the footer states it rather than re-deriving it from the URL the client thinks it sent. `provenance` is `all` when nothing narrowed it; `q` and `stage` are empty strings when absent.",
+      "type": "object",
+      "required": [
+        "q",
+        "provenance",
+        "stage"
+      ],
+      "properties": {
+        "q": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        }
+      }
+    },
+    "ticketIndexRow": {
+      "title": "TicketIndexRow",
+      "description": "One row of §4.17's table. `provenance` is `delivery.state` and NEVER the document's `status:` field — the document is a claim written by a session that may not have survived to write it truthfully. Both are carried: `status` is what the document said, `provenance` is what git says, and `delivery.disagrees` marks the pair when they cannot both be right, which is the most valuable thing on the row (§3.5). `provenance` and `stage` are two axes and are never merged into one status chip (§3.2).",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "workspace",
+        "status",
+        "provenance",
+        "delivery",
+        "stage",
+        "lane",
+        "evidence",
+        "roles",
+        "extras",
+        "cost_usd",
+        "needs_you"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "workspace": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "description": "The document's own claim, carried beside the derived state and never in place of it."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "`delivery.state`, and nothing else."
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "stage": {
+          "$ref": "#/$defs/stage"
+        },
+        "lane": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/role"
+          }
+        },
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "extras": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extra"
+          }
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "needs_you": {
+          "type": "boolean"
+        },
+        "parse_error": {
+          "type": "string"
+        }
+      }
+    },
+    "ticketGroup": {
+      "title": "TicketGroup",
+      "description": "The tickets one requirement claims as its children, and the group header's own numbers. `count`, `merged` and `pushed` are over the WHOLE group after filtering — not over the page — and they are members of this object so the design's two-segment bar cannot describe a set the rows below it are not (WEB-FIX-091). `tickets` is this group's slice of the page window and is empty on a page that lands entirely in other groups. A ticket whose `parent` names no requirement on disk lands in the synthetic `standalone` group, last, which is the same one name E3 and E4 already use.",
+      "type": "object",
+      "required": [
+        "parent",
+        "title",
+        "count",
+        "merged",
+        "pushed",
+        "tickets"
+      ],
+      "properties": {
+        "parent": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "merged": {
+          "type": "integer"
+        },
+        "pushed": {
+          "type": "integer"
+        },
+        "tickets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ticketIndexRow"
+          }
+        }
+      }
+    },
+    "escapeCell": {
+      "title": "EscapeCell",
+      "description": "One cell of the ledger's table. `column` is the file's own header text, verbatim. `ticket_id` is set when the cell's text contains an id the catalog resolves, so the client links it and parses nothing; a cell naming an id nobody wrote carries text and no `ticket_id`.",
+      "type": "object",
+      "required": [
+        "column",
+        "text"
+      ],
+      "properties": {
+        "column": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "ticket_id": {
+          "type": "string"
+        }
+      }
+    },
+    "escapeRow": {
+      "title": "EscapeRow",
+      "description": "One row of the ledger, one `cells` entry per column, in the file's order.",
+      "type": "object",
+      "required": [
+        "cells"
+      ],
+      "properties": {
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/escapeCell"
+          }
+        }
+      }
+    },
+    "wikiFront": {
+      "title": "WikiFront",
+      "description": "One frontmatter key the tool does not understand, in the order the document wrote it. Values pass through untouched — the tool renders them as labels and knows none of them, exactly as `display.ticket_fields` reaches E5's `extras`.",
+      "type": "object",
+      "required": [
+        "label",
+        "value"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "wikiSection": {
+      "title": "WikiSection",
+      "description": "One page. `id` is the filename without its extension — the repository's own word and the only name this surface has for a page. `title` is the frontmatter's, falling back to the filename. A document whose frontmatter will not parse stays in the list with `parse_error` set and `body_markdown` intact: one unreadable file may not blank a screen.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "path",
+        "bytes",
+        "front",
+        "body_markdown"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "front": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/wikiFront"
+          }
+        },
+        "body_markdown": {
+          "type": "string"
+        },
+        "parse_error": {
+          "type": "string"
+        }
+      }
+    },
+    "manifestRepo": {
+      "title": "ManifestRepo",
+      "description": "One repository in the monorepo this manifest declares. A monorepo is a SET of repositories, each carrying its own documents; the tool serves them so a surface can show what it is pointed at without reading the manifest file.",
+      "type": "object",
+      "required": [
+        "path",
+        "docs"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "docs": {
+          "type": "object",
+          "required": [
+            "epics",
+            "tickets",
+            "reports"
+          ],
+          "properties": {
+            "epics": {
+              "type": "string"
+            },
+            "tickets": {
+              "type": "string"
+            },
+            "reports": {
+              "type": "string"
+            },
+            "wiki": {
+              "type": "string"
+            },
+            "escapes": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "series": {
+      "title": "Series",
+      "description": "One reduction over a collection of runs, in minutes. `median` and `mean` are `null` when `n` is 0 — nothing was measured, which is not the same fact as a measured zero, and a screen drawing `0.0m` over an empty window says something false about a repository that has simply not run anything.",
+      "type": "object",
+      "required": [
+        "median",
+        "mean",
+        "n"
+      ],
+      "properties": {
+        "median": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "mean": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "n": {
+          "type": "integer"
+        }
+      }
+    },
+    "stageMinutes": {
+      "title": "StageMinutes",
+      "description": "One stage of the repository's own sequences, with the minutes its runs spent in it. `name` is a stage the repository declared — on a ticket's `stages:` line or in the manifest — never a name the tool knows (S1). A stage no run reported has no row: a row with `n: 0` would be a claim about a collection with no members.",
+      "type": "object",
+      "required": [
+        "name",
+        "median",
+        "mean",
+        "n"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "median": {
+          "type": "number"
+        },
+        "mean": {
+          "type": "number"
+        },
+        "n": {
+          "type": "integer"
+        }
+      }
+    },
+    "requirementChild": {
+      "title": "RequirementChild",
+      "description": "One DIRECT child requirement on E4, with that child's own tickets grouped exactly as its own page groups them — `tickets` is E4's `group` shape reused, not a second one. One level deep: a grandchild appears on ITS parent's page, and E3 is where the whole tree is. `ticket_count` is the same roll-up E3's row for this id carries, so one word has one meaning on both endpoints; `own_ticket_count` is beside it because the roll-up sits next to a collection holding the own tickets only, and a number beside a collection it is not the count of is a false sentence (WEB-FIX-091).",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "repo",
+        "status",
+        "own_ticket_count",
+        "ticket_count",
+        "delivery",
+        "tickets"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string",
+          "description": "The manifest's own name for the repository holding this child's document — a word the tool was given and never discovered, and `\"\"` for a manifest that declares no `repos` block. The tool names no path (S1)."
+        },
+        "status": {
+          "type": "string"
+        },
+        "own_ticket_count": {
+          "type": "integer"
+        },
+        "ticket_count": {
+          "type": "integer"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "tickets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/group"
+          }
+        }
+      }
+    },
+    "routingStep": {
+      "title": "RoutingStep",
+      "description": "A finite explicit command step. Reuse is opt-in because ignored outputs and external dependencies are outside the source identity.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "which",
+        "accepted_exit_codes"
+      ],
+      "properties": {
+        "which": {
+          "type": "string"
+        },
+        "accepted_exit_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "reuse": {
+          "type": "boolean"
+        },
+        "require_decision": {
+          "type": "boolean"
+        }
+      }
+    },
+    "routingRequest": {
+      "title": "RoutingRequest",
+      "description": "E33 strict submission. Duplicate JSON members and unknown fields are refused before effects.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "steps"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/routingStep"
+          }
+        }
+      }
+    },
+    "routingReceipt": {
+      "title": "RoutingReceipt",
+      "description": "Terminal captured command evidence bound to inputs. Complete captures are bytes, exposed as base64 only when explicitly requested. An empty source_after records unknown inputs only on the final nonreused receipt of needs_main/main/source_unresolved; it cannot certify completion or reuse.",
+      "type": "object",
+      "required": [
+        "index",
+        "which",
+        "command",
+        "command_id",
+        "source",
+        "source_after",
+        "exit_code",
+        "capture_path",
+        "capture_sha256",
+        "bytes",
+        "accepted",
+        "reused",
+        "complete"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "which": {
+          "type": "string"
+        },
+        "command": {
+          "type": "string"
+        },
+        "command_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "source_after": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{64})?$",
+          "description": "The observed terminal source digest, or an empty string only for the final nonreused receipt of needs_main/main/source_unresolved. Empty never means unchanged inputs."
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "capture_path": {
+          "type": "string"
+        },
+        "capture_sha256": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "reused": {
+          "type": "boolean"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "output_base64": {
+          "type": "string"
+        }
+      }
+    },
+    "routingCheckpoint": {
+      "title": "RoutingCheckpoint",
+      "description": "A stable request for advice after repeated identical actual failures; it does not claim an advisor session ran.",
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "cause",
+        "receipt_count"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "repeated_error"
+          ]
+        },
+        "cause": {
+          "type": "string"
+        },
+        "receipt_count": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
+    },
+    "runTree": {
+      "title": "RunTree",
+      "type": "object",
+      "required": [
+        "name",
+        "decider",
+        "agents"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "decider": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "continuation": {
+          "type": "string",
+          "enum": ["goal"]
+        },
+        "compact_on_stage": {
+          "type": "boolean"
+        },
+        "token_budget": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  },
+  "responses": {
+    "E1": {
+      "path": "/api/health",
+      "method": "GET",
+      "status": 200,
+      "title": "Health",
+      "description": "E1 — who this is, what it is pointed at, and how long it has been up. Always 200: a process that is up with a broken manifest must be able to say so.",
+      "type": "object",
+      "required": [
+        "factory",
+        "manifest",
+        "repo",
+        "uptime_s"
+      ],
+      "properties": {
+        "factory": {
+          "type": "string"
+        },
+        "manifest": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "object",
+          "required": [
+            "name",
+            "root",
+            "git_root"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "root": {
+              "type": "string",
+              "description": "The DOCUMENT root — the directory the operator pointed the server at, where `.factory/factory.json` and the `docs/` tree live. It is what the tool was given and it is never discovered."
+            },
+            "git_root": {
+              "type": "string",
+              "description": "The GIT root that encloses the document root, or empty when none does. The two are the same directory for a repository whose manifest sits at its own top level, and one level apart for a manifest inside a monorepo. Confinement and lane worktrees need this one; a lane is refused with `no_git_root` when it is empty, because a lane that cannot be confined can never be run (SRV-FIX-290)."
+            }
+          }
+        },
+        "uptime_s": {
+          "type": "integer"
+        },
+        "delivery": {
+          "type": "object",
+          "required": [
+            "available",
+            "git"
+          ],
+          "properties": {
+            "available": {
+              "type": "boolean"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "base": {
+              "type": "string"
+            },
+            "forge": {
+              "type": "string"
+            },
+            "git": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "detail": {
+          "type": "object"
+        }
+      }
+    },
+    "E2": {
+      "path": "/api/manifest",
+      "method": "GET",
+      "status": 200,
+      "title": "Manifest",
+      "description": "E2 — the manifest as loaded, normalised. Everything the tool knows about the repository it is pointed at is in here, and the tool attaches meaning to none of the names. A manifest declaring `repos` carries that block INSTEAD of a top-level `docs` — the documents belong to a repository, and two answers to where they are is a manifest that means nothing, so the loader refuses both together and this body never carries both (SRV-FIX-181).",
+      "type": "object",
+      "required": [
+        "factory",
+        "repo",
+        "path",
+        "workspaces",
+        "lanes",
+        "agent",
+        "resolved",
+        "warnings"
+      ],
+      "properties": {
+        "factory": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "object",
+          "required": [
+            "name",
+            "root"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "root": {
+              "type": "string"
+            }
+          }
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaces": {
+          "type": "object",
+          "description": "Named workspaces as normalized from the manifest. A workspace may include start_preflight {command, timeout_seconds, exempt_ticket_ids}; E18 and automatic role starts run that check before agent creation."
+        },
+        "resources": {
+          "type": "object"
+        },
+        "lanes": {
+          "type": "object",
+          "required": [
+            "host"
+          ],
+          "properties": {
+            "host": {
+              "type": "integer"
+            }
+          }
+        },
+        "docs": {
+          "type": "object",
+          "required": [
+            "epics",
+            "tickets",
+            "reports"
+          ],
+          "properties": {
+            "epics": {
+              "type": "string"
+            },
+            "tickets": {
+              "type": "string"
+            },
+            "reports": {
+              "type": "string"
+            }
+          },
+          "description": "The implicit repository at `.`, for a manifest that declares no `repos`. Absent when `repos` is present."
+        },
+        "repos": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/manifestRepo"
+          }
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "object"
+        },
+        "display": {
+          "type": "object"
+        },
+        "default_agent": {
+          "type": "string"
+        },
+        "default_tree": {
+          "type": "string"
+        },
+        "trees": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "decider",
+              "agents"
+            ],
+            "properties": {
+              "decider": {
+                "type": "string",
+                "enum": [
+                  "rules"
+                ]
+              },
+              "agents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "agents": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "driver",
+              "command",
+              "default_model",
+              "models"
+            ],
+            "properties": {
+              "driver": {
+                "type": "string",
+                "enum": [
+                  "claude",
+                  "codex"
+                ]
+              },
+              "command": {
+                "type": "string"
+              },
+              "default_model": {
+                "type": "string"
+              },
+              "models": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "efforts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "default_effort": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "agent": {
+          "type": "object",
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "string"
+            }
+          }
+        },
+        "resolved": {
+          "type": "object",
+          "required": [
+            "paths"
+          ],
+          "properties": {
+            "paths": {
+              "type": "object"
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        },
+        "run_effort": {
+          "type": "string"
+        }
+      }
+    },
+    "E3": {
+      "path": "/api/requirements",
+      "method": "GET",
+      "status": 200,
+      "title": "Requirements",
+      "description": "E3 — the requirement list, filtered and searched server-side so the count line and the rows cannot disagree. `total` is the count line; it is never computed in the browser.",
+      "type": "object",
+      "required": [
+        "requirements",
+        "total",
+        "in_flight"
+      ],
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirementRow"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "in_flight": {
+          "type": "integer"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E4": {
+      "path": "/api/requirements/{id}",
+      "method": "GET",
+      "status": 200,
+      "title": "Requirement",
+      "description": "E4 — one requirement and its tickets, grouped by workspace, each group carrying its own stage sequence, preceded by its direct child requirements (SRV-FEAT-547). `state` and `delivery` here are rolled up over this requirement and every descendant, so §4.2's row and §4.3's header cannot say two different words about the same document; `needs_you` is not — it is `{count,total}` over the `groups` this page draws.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "body_markdown",
+        "needs_you",
+        "groups",
+        "children"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "updated_iso": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "body_markdown": {
+          "type": "string"
+        },
+        "needs_you": {
+          "$ref": "#/$defs/needsYou"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirementChild"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/group"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E5": {
+      "path": "/api/tickets/{id}",
+      "method": "GET",
+      "status": 200,
+      "title": "Ticket",
+      "description": "E5 — one ticket: its frontmatter, the repository's own extra fields in declaration order, its body, and where the file is.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "workspace",
+        "status",
+        "path",
+        "stages",
+        "stage",
+        "extras",
+        "body_markdown",
+        "report",
+        "state",
+        "delivery"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "workspace": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "status": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "updated_iso": {
+          "type": "string"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stage": {
+          "$ref": "#/$defs/stage"
+        },
+        "extras": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extra"
+          }
+        },
+        "body_markdown": {
+          "type": "string"
+        },
+        "lane": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "runs": {
+          "$ref": "#/$defs/runs"
+        },
+        "report": {
+          "type": "object",
+          "required": [
+            "exists",
+            "path",
+            "evidence"
+          ],
+          "properties": {
+            "exists": {
+              "type": "boolean"
+            },
+            "path": {
+              "type": "string"
+            },
+            "evidence": {
+              "type": "string"
+            }
+          }
+        },
+        "needs_you": {
+          "type": "boolean"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/role"
+          }
+        },
+        "parse_error": {
+          "type": "string"
+        }
+      }
+    },
+    "E6": {
+      "path": "/api/tickets/{id}/report",
+      "method": "GET",
+      "status": 200,
+      "title": "Report",
+      "description": "E6 — the delivery report and its evidence verdict. Its 404 is the normal case, not an error: it is what 4.9's empty state renders, and the client must not log it as a failure.",
+      "type": "object",
+      "required": [
+        "ticket_id",
+        "path",
+        "body_markdown",
+        "evidence"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "updated_iso": {
+          "type": "string"
+        },
+        "body_markdown": {
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "E7": {
+      "path": "/api/tickets/{id}/runs",
+      "method": "GET",
+      "status": 200,
+      "title": "RunHistory",
+      "description": "E7 — a ticket's run history, newest first. An unknown ticket is a 404 and a known ticket with no runs is a 200 with an empty list: two different questions, and they must not share an answer.",
+      "type": "object",
+      "required": [
+        "runs"
+      ],
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/runRow"
+          }
+        }
+      }
+    },
+    "E8": {
+      "path": "/api/runs/{run_id}/transcript",
+      "method": "GET",
+      "status": 200,
+      "checked_by": "browser-gate.mjs section 8d — `{run_id}` names a run that does not exist until one has been recorded",
+      "title": "Transcript",
+      "description": "E8 — one run's transcript, replayed: backfill for the live SESSION tab, and the whole of a finished run read back from the RUNS tab. A run whose log has been cleaned answers 404 naming the path it looked for, while the run's row survives in E7 — history is expendable and correctness is not.",
+      "type": "object",
+      "required": [
+        "run_id",
+        "entries",
+        "next_after_seq",
+        "complete"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/transcriptEntry"
+          }
+        },
+        "next_after_seq": {
+          "type": "integer"
+        },
+        "complete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "E9": {
+      "path": "/api/lanes",
+      "method": "GET",
+      "status": 200,
+      "title": "Lanes",
+      "description": "E9 — the lane set: every lane, the exclusive resources and who holds them, and the host's seats. It is the data behind SPEC.md §4.4's rail AND §4.1's `N lanes need you` chip, read once and shared, because two readers of one endpoint are two answers that can disagree.",
+      "type": "object",
+      "required": [
+        "lanes",
+        "resources",
+        "seats"
+      ],
+      "properties": {
+        "lanes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lane"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "seats": {
+          "$ref": "#/$defs/seats"
+        },
+        "warnings": {
+          "type": "array",
+          "description": "SRV-FIX-071 — E2's refusal, when the manifest did not load. Empty on an ordinary lane set, so an empty rail and a rail whose manifest never loaded are not the same answer. SRV-FIX-432 adds `unaccountable_worktree`, one per entry under the lane root a restart could not adopt — so a populated lane root is never described by silence.",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E10": {
+      "path": "/api/lanes/{lane}/diff",
+      "method": "GET",
+      "status": 200,
+      "checked_by": "browser-gate.mjs section 8d — `{lane}` names a lane that does not exist until one has been claimed",
+      "title": "Diff",
+      "description": "E10 — what this lane changed and what it committed, and with `?path=` one file's patch. A lane that changed nothing answers 200 with empty arrays, which the DIFF tab renders as \"Nothing changed in this lane yet.\"; an unknown lane is a 404 naming it. Deciding whether to keep the work is the point of the exercise, and it cannot be done from a transcript (F23).",
+      "type": "object",
+      "required": [
+        "lane",
+        "branch",
+        "files",
+        "commits",
+        "totals"
+      ],
+      "properties": {
+        "lane": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "base": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "base_branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diffFile"
+          }
+        },
+        "commits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diffCommit"
+          }
+        },
+        "totals": {
+          "$ref": "#/$defs/diffTotals"
+        },
+        "patch": {
+          "type": "string"
+        }
+      }
+    },
+    "E11": {
+      "path": "/api/permissions/rules",
+      "method": "GET",
+      "status": 200,
+      "title": "PermissionRules",
+      "description": "E11 — the standing policy and every rule in force, for SPEC.md §4.12. Read once when the surface mounts and never again on a clock: E20, E21 and E23 all broadcast M12 to every client, so the screen changes because the tool said it changed and a second tab cannot show a policy that is no longer in force. `policy_source` is `session` once E21 has been used in this tool process and `manifest` otherwise. A corrupt rules file is a 200 with `warnings` and an EMPTY rule set — a policy fails closed, to asking, never open.",
+      "type": "object",
+      "required": [
+        "policy",
+        "policy_source",
+        "rules"
+      ],
+      "properties": {
+        "policy": {
+          "type": "string"
+        },
+        "policy_source": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/permissionRule"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E18": {
+      "path": "/api/lanes/{lane}/runs",
+      "method": "POST",
+      "status": 201,
+      "checked_by": "browser-gate.mjs section 10 — a successful start requires a claimed lane and the declared stand-in agent",
+      "request": {
+        "$ref": "#/$defs/startRunRequest"
+      },
+      "title": "StartedRun",
+      "description": "E18 — a run started in the lane. The resolved agent profile, driver, model and reasoning effort are returned with its process and session identity, including when defaults were selected. `effort` is what the launch sent, and `null` when it sent none. An invalid selection is refused before spawning; no fallback driver is substituted.",
+      "type": "object",
+      "required": [
+        "run_id",
+        "session_id",
+        "pid",
+        "agent",
+        "driver",
+        "model",
+        "tree"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "pid": {
+          "type": "integer"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "tree": {
+          "$ref": "#/$defs/runTree"
+        },
+        "effort": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "A reasoning effort in the PROVIDER's own words, as the launch actually sent it: `--effort <level>` on the Claude argv, `effort` on every codex `turn/start`. `null` is a run that carried none — a profile declaring no `efforts`, and every record written before this field existed. It is never the tool's guess at what the provider would have defaulted to, because the provider's default is not a thing the tool can see."
+        }
+      }
+    },
+    "E26": {
+      "path": "/api/tickets/ids",
+      "method": "POST",
+      "status": 201,
+      "title": "TicketId",
+      "description": "E26 — one ticket id, allocated by the tool, handed to exactly one caller. SPEC.md §4.4's shared-value rule on the wire: a lane is a checkout cut at claim time and nothing merges into a live one, so an id each lane computes from the files it can see is an id two lanes can compute the same value for and both be right. `number` is the number alone and `id` is what the document will be called; `series` is the sequence it came from — `FAC` for `FAC-FIX`, `\"\"` for a prefix that is only a type — because the counter is the series' and never the type's. The high-water mark spans every declared repository, and an id handed out is spent whether or not a document is ever written with it.",
+      "type": "object",
+      "required": [
+        "id",
+        "prefix",
+        "series",
+        "number"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "series": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        }
+      }
+    },
+    "E30": {
+      "path": "/api/home",
+      "method": "GET",
+      "status": 200,
+      "title": "Home",
+      "description": "E30 — where the work is, what needs you, and what has never left this machine, in ONE read. §4.18 draws three panels and they are three views of one question: three endpoints would be three answers about one repository at three instants, which is FAC-EPIC-004's defect class generalised, and the counts in the first panel and the rows in the second would be free to disagree while each stayed correct. NOTHING HERE WRITES. `needs_you.total` counts tickets and not clauses. Reads product repositories only, as E3 and E29 do. `tickets` carries the same read one row per ticket, with the axes §3.2b's predicates need and never the cell they flatten to: the strip and the counts beside it are then two views of one array read at one instant, which is what this endpoint exists to guarantee. A repository with nothing in it answers 200 with every count zero and both row lists empty, and the `docs` directories absent answers the same plus `warnings:[{code:\"path_missing\",path}]` — a 404 for either would say *this repository does not exist* about a repository that does.",
+      "type": "object",
+      "required": [
+        "delivery",
+        "needs_you",
+        "unpushed",
+        "lanes"
+      ],
+      "properties": {
+        "delivery": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveryCount"
+          }
+        },
+        "needs_you": {
+          "type": "object",
+          "required": [
+            "total",
+            "rows"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/needsYouRow"
+              }
+            }
+          }
+        },
+        "unpushed": {
+          "type": "object",
+          "required": [
+            "total",
+            "rows"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/unpushedRow"
+              }
+            }
+          }
+        },
+        "lanes": {
+          "$ref": "#/$defs/laneOccupancy"
+        },
+        "tickets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/homeTicketRow"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E29": {
+      "path": "/api/tickets",
+      "method": "GET",
+      "status": 200,
+      "title": "Tickets",
+      "description": "E29 — every ticket in the repository, grouped by the requirement it names as `parent`, with the filter facets and the page window. Filtering, search, faceting and paging are all the server's: `total`, `from` and `to` are members of this answer and are what the count line renders, so a screen cannot say `showing 1–12 of 12` about a repository with three hundred tickets while every assertion about its rows passes (WEB-FIX-091). `?q=` matches id, title, owner and lane case-insensitively; `?provenance=` takes `delivery.state`'s values and `?stage=` a stage name the repository declares — two axes, never collapsed into one status parameter (§3.2) — and a value neither declares is `400 bad_filter` naming the parameter and listing what is accepted, exactly as E3 refuses one. A `page` beyond the last is an empty window and not a 404: a stale page number in a link somebody sent is not a missing thing, and `page_size` above the maximum is clamped with `warnings:[{code:\"clamped\",field:\"page_size\"}]`.",
+      "type": "object",
+      "required": [
+        "groups",
+        "total",
+        "from",
+        "to",
+        "page",
+        "pages",
+        "page_size",
+        "facets",
+        "applied"
+      ],
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ticketGroup"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "from": {
+          "type": "integer"
+        },
+        "to": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "page_size": {
+          "type": "integer"
+        },
+        "facets": {
+          "$ref": "#/$defs/facets"
+        },
+        "applied": {
+          "$ref": "#/$defs/appliedFilters"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E31": {
+      "path": "/api/runs",
+      "method": "GET",
+      "status": 200,
+      "title": "RunIndex",
+      "description": "E31 — every run in the repository, newest first; the index E7 is the per-ticket slice of. `?limit=<int, default 100, max 500>&before=<run_id>` pages it, and `total` counts every run recorded rather than the page. `committed` is `false` and is SERVED rather than described, because `.factory/runs/` is not committed: §4.19's line about this being one machine's history is a fact the client reads instead of a sentence somebody typed into a component. No runs at all — `.factory/runs/` absent, or present and empty — is a 200 with an empty list and `total: 0`: history is expendable (§2) and its absence is a state, not an error.",
+      "type": "object",
+      "required": [
+        "runs",
+        "total",
+        "committed"
+      ],
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/runIndexRow"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "committed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "E28": {
+      "path": "/api/escapes",
+      "method": "GET",
+      "status": 200,
+      "title": "Escapes",
+      "description": "E28 — the ledger of defects a gate passed. `columns` is the header row of the FIRST markdown table in the declared file, verbatim; `rows` are its rows in the file's order. Nothing is sorted, ranked, dated or scored: the file's order is the repository's statement about its own history. `docs.escapes` not declared is a 404 `not_found` with `detail.key`; declared and the file absent is a 200 with empty `columns` and `rows` and a `path_missing` warning, because a missing file is a manifest mistake and not an error state. Present with no markdown table is a 200 and no warning — a ledger with no rows yet is a repository that has not been caught out.",
+      "type": "object",
+      "required": [
+        "columns",
+        "rows",
+        "total",
+        "path"
+      ],
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/escapeRow"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E27": {
+      "path": "/api/wiki",
+      "method": "GET",
+      "status": 200,
+      "title": "Wiki",
+      "description": "E27 — the repository's own pages, whole. No request parameters: filtering a handful of hand-written pages is the client's, and the whole set is one answer. `docs.wiki` not declared is a 404 `not_found` with `detail.key` and no `detail.path`, because there is no path to name — the answer is a line to add to the manifest. Declared and the directory absent is a 200 with an empty list and a `path_missing` warning.",
+      "type": "object",
+      "required": [
+        "sections",
+        "total"
+      ],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/wikiSection"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/warning"
+          }
+        }
+      }
+    },
+    "E32": {
+      "path": "/api/metrics",
+      "method": "GET",
+      "status": 200,
+      "title": "Metrics",
+      "description": "E32 — the playbook's stage metrics for a window of N days, computed when asked from the run records and documents the tool already holds. `?days=<int 1..3650, default 30>`; nothing is indexed, nothing is cached and nothing is written (S2). Every series is bounded by its own clock: the run series by `started_iso`, `escapes_in_window` by the date cell of the ledger row, `spec_to_land_hours` by the landing commit's date. EVERY RATE IS `null` WHEN ITS DENOMINATOR IS 0 and a number only when something was measured — `0` means measured and none qualified, which is a different fact from nothing having run, and a screen that cannot tell them apart draws a failing process over an empty repository. Counts stay `0`, because a count of nothing is nothing. `first_pass_qa_rate` and `tickets_with_verdict` are the same collection: the rate's denominator is served beside it so a surface cannot draw one over the other's population (WEB-FIX-091). A window with no runs at all is a 200, not a 404: history is expendable (§2) and its absence is a state. `?days=` that is not an integer in 1..3650 is a 400 `bad_window`.",
+      "type": "object",
+      "required": [
+        "window_days",
+        "runs",
+        "tickets_with_verdict",
+        "first_pass_qa_rate",
+        "rounds_per_ticket",
+        "stage_minutes",
+        "active_minutes",
+        "spec_to_land_hours",
+        "escapes_in_window",
+        "rework_after_build"
+      ],
+      "properties": {
+        "window_days": {
+          "type": "integer"
+        },
+        "runs": {
+          "type": "integer"
+        },
+        "tickets_with_verdict": {
+          "type": "integer"
+        },
+        "first_pass_qa_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "rounds_per_ticket": {
+          "type": "object",
+          "required": [
+            "median",
+            "mean"
+          ],
+          "properties": {
+            "median": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "mean": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "stage_minutes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stageMinutes"
+          }
+        },
+        "active_minutes": {
+          "$ref": "#/$defs/series"
+        },
+        "spec_to_land_hours": {
+          "type": "object",
+          "required": [
+            "median",
+            "n"
+          ],
+          "properties": {
+            "median": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "n": {
+              "type": "integer"
+            }
+          }
+        },
+        "escapes_in_window": {
+          "type": "integer"
+        },
+        "rework_after_build": {
+          "type": "object",
+          "required": [
+            "tickets",
+            "share"
+          ],
+          "properties": {
+            "tickets": {
+              "type": "integer"
+            },
+            "share": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "E33": {
+      "path": "/api/lanes/{lane}/routing",
+      "method": "POST",
+      "status": 202,
+      "checked_by": "browser-gate.mjs after section 11 — real claimed-lane submission; server/tests/test_ticket_router.py covers routing execution and refusals",
+      "title": "RoutingSubmission",
+      "description": "Run an explicit finite plan of manifest-declared commands through E19 confinement. Identical retained delivery returns 200. Accepted completion returns control to main and never grades or lands a ticket.",
+      "type": "object",
+      "required": [
+        "request_id",
+        "lane",
+        "ticket_id",
+        "source",
+        "state",
+        "action",
+        "reason",
+        "next_index",
+        "receipts",
+        "checkpoint"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "lane": {
+          "type": "string"
+        },
+        "ticket_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "running",
+            "completed",
+            "needs_main",
+            "interrupted"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "wait",
+            "main",
+            "advisor"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "next_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/routingReceipt"
+          }
+        },
+        "checkpoint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/routingCheckpoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "E34": {
+      "path": "/api/lanes/{lane}/routing/{request_id}",
+      "method": "GET",
+      "status": 200,
+      "checked_by": "browser-gate.mjs after section 11 — retained terminal state and complete capture; server/tests/test_ticket_router.py covers evidence integrity",
+      "title": "RoutingState",
+      "description": "Read a retained routing job without dispatch. include_output=true includes the complete base64 capture. Damaged evidence or changed inputs cannot be presented as reusable completion.",
+      "type": "object",
+      "required": [
+        "request_id",
+        "lane",
+        "ticket_id",
+        "source",
+        "state",
+        "action",
+        "reason",
+        "next_index",
+        "receipts",
+        "checkpoint"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "lane": {
+          "type": "string"
+        },
+        "ticket_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "running",
+            "completed",
+            "needs_main",
+            "interrupted"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "wait",
+            "main",
+            "advisor"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "next_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/routingReceipt"
+          }
+        },
+        "checkpoint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/routingCheckpoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

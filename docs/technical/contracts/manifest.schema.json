@@ -1,0 +1,509 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Factory manifest",
+  "description": "What a repository tells the factory about itself. The only door product-specific knowledge comes through.",
+  "type": "object",
+  "required": [
+    "factory",
+    "workspaces"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "factory": {
+      "type": "string",
+      "description": "Manifest major.minor. The tool refuses a major it does not know rather than guessing.",
+      "examples": [
+        "0.1"
+      ]
+    },
+    "workspaces": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "The parts of the repo work is done in. Names are the repo's own; the factory attaches no meaning to them.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative to this workspace's repo's `path` — the repo root itself when no `repos` block is declared."
+          },
+          "repo": {
+            "type": "string",
+            "description": "Which `repos` entry this workspace belongs to, and therefore what its `path` is relative to. Required once `repos` is declared and meaningless without it: placing a workspace by declaration order would be the tool defaulting a fact about somebody else's repository."
+          },
+          "gate": {
+            "type": "string",
+            "description": "The command that decides pass or fail for this workspace. Checked at LOAD like `build` and like every other command declared here — they are one set, and a prerequisite proven for one of them and assumed for the rest is SRV-FIX-202. A program it names must resolve in one of the three places a lane is given: `/usr`, this workspace's `toolchain`, or the repository. A `command_unrunnable` warning naming this key, this workspace's `toolchain` and the word carries the answer when it does not — the manifest still loads and the lane is still claimed, because the line that answers such a warning is written by a person and a tool that refuses until it exists cannot be started (SRV-FIX-202 round 2)."
+          },
+          "build": {
+            "type": "string",
+            "description": "The command that builds this workspace. Checked at LOAD exactly as `gate` is and by the same code path (SRV-FIX-202): a program it names must resolve under `/usr`, under this workspace's declared `toolchain`, or in the repository, or a `command_unrunnable` warning names this key. A warning, not a refusal, and for the reason `gate` gives above."
+          },
+          "review": {
+            "type": "string",
+            "description": "The command that reviews a change in this workspace — SRV-FEAT-500. The third member of the one set declared here and checked at LOAD, on exactly the terms `gate` and `build` state above and by the same code path: a program it names must resolve under `/usr`, under this workspace's `toolchain`, or in the repository, or a `command_unrunnable` warning names this key. The tool learns the NAME and nothing about what a review is — what the string does, which passes it makes and how it ranks what it finds are the repository's business, and its exit code is reported and never interpreted (§10). Findings do not approve or block anything: `E19` runs it, `M10` carries its output, and no verdict of the tool's is derived from either."
+          },
+          "start_preflight": {
+            "type": "object",
+            "description": "Optional confined readiness check before each E18 run start, including resume. Failed checks create no run record.",
+            "required": [
+              "command"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "timeout_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 60,
+                "default": 15
+              },
+              "exempt_ticket_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "toolchain": {
+            "type": "array",
+            "description": "Host paths this workspace's declared commands cannot run without — its `build` AND its `gate`, which is one set and not one member (SRV-FIX-195): a toolchain directory, a runtime, a socket. Bound READ-ONLY into every lane claimed for this workspace, at the path written here: a leading `~/` means the LANE'S home, so `~/environment/esp-idf-v5.5.1` is that path inside the lane and the lane's home stays an otherwise-empty tmpfs; anything else is bound at its own absolute path. Declared rather than discovered, on the workspace rather than on a resource: a toolchain belongs to what is being built, and `board-master` is a wire. A path that is not there makes the manifest invalid AT LOAD, and so does one broad enough to be a whole home — a lane that reaches the rest of the developer's machine is SRV-FEAT-002's guarantee deleted by one manifest line (SRV-FIX-077).",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "x-ticket-frontmatter": "A ticket document's `workspaces:` frontmatter line names the EXTRA workspaces whose toolchain its lane binds, beyond the one its `workspace:` names. Absent means its own only. The manifest declares nothing for it — the tool reads the key off the ticket at claim time (SRV-FIX-456, SRV-FIX-517). Documented here because the schema is where a reader looks for what a workspace name may appear in."
+    },
+    "repos": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "A monorepo is a set of repositories, and this is where it says so (SRV-FIX-181). Each entry is one repository INSIDE the repository the tool was pointed at: a path, a documents tree of its own, and — through `workspaces.<name>.repo` — the workspaces that belong to it. The tool is GIVEN this structure: it discovers no directory and defaults no repository, and a declared repo that leaves the repository the tool was pointed at is refused with every other escaping path. Absent means ONE implicit repository at `.` carrying the top-level `docs`, so every manifest written before this block existed resolves to the byte-identical absolute paths it always did, and the major stays 0.1. A ticket belongs to the repo whose `tickets` directory holds its file, read and never declared per document; an id held by two repos is refused rather than served from whichever was read first.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative to the root of the repository the tool was pointed at; `.` is that root itself."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "product",
+              "tool"
+            ],
+            "default": "product",
+            "description": "Whether this repository is the thing being worked ON or the thing being worked WITH (SRV-FIX-199). `product` — the default, and what a repository that never heard of this key is — means its requirements are the ones the screens are for. `tool` means the factory itself, or any other instrument that happens to live in the same checkout: its requirements are NOT listed by `GET /api/requirements` and are not members of the synthetic `standalone` group, and everything else is unchanged — its tickets are still served by id, its reports still resolve beside them, a lane is still claimed for them and the lane rail still draws it. Readable and displayed are different questions, and this key is the only place the second one is answered. It is a property of the REPOSITORY and not a filter a client passes: the question is answered once, by the person who writes this file. Two values and no third; a value that is neither is refused at load, and so is a manifest whose every repository is `tool` — a tool that displays nothing is not a narrower tool, it is a blank screen."
+          },
+          "docs": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Where THIS repository keeps its requirements and their records. Every path here is relative to this repository's own `path`, so two repositories may write the same relative path and resolve to two different absolute ones — and the day one of them is split out into a repository of its own, its `path` becomes `.` and nothing else in the manifest changes.",
+            "properties": {
+              "epics": {
+                "type": "string",
+                "default": "docs/epics"
+              },
+              "tickets": {
+                "type": "string",
+                "default": "docs/tickets"
+              },
+              "reports": {
+                "type": "string",
+                "default": "docs/reports"
+              },
+              "wiki": {
+                "type": "string",
+                "description": "The directory holding this repository's own explanatory pages — whatever it calls them and however it sections them. Every `*.md` under it is one section: the tool reads each document's frontmatter through untouched and attaches meaning to none of it, so the sections, their order and their names are the repository's and never the tool's. **There is no default, and that is the point.** A repository that does not declare this key has no such surface and no rail row for one, because a default would be a directory layout the tool taught itself — which is the one thing this file exists to prevent (SRV-FEAT-304)."
+              },
+              "escapes": {
+                "type": "string",
+                "description": "The ledger of defects a gate passed — one FILE, not a directory, because the ledger is a single document a row is appended to. **No default**, for `wiki`'s reason: absent means no such surface and no rail row, and a tool that guessed a filename would be reading a repository it was never given (SRV-FEAT-304)."
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "description": "Things there is only one of: a board, a serial port, a climate chamber, a staging database. The factory only needs to know it is exclusive and who queues for it.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "exclusive"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "exclusive": {
+            "type": "boolean"
+          },
+          "needed_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "devices": {
+            "type": "array",
+            "description": "Character or block device NODES this resource is. Declared here so the lane holding the resource — and only that lane — gets them; a directory, a glob or /dev itself is refused at load (SRV-FIX-063). A path is bound at the name written here, so a by-id symlink appears in the lane under that name and not under whatever ttyUSBn it resolves to today (SRV-FIX-069). Only meaningful on an exclusive resource: nothing queues on a non-exclusive one, so no lane would ever hold the device, and declaring both is refused (SRV-FIX-070).",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "lanes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Seats that never touch an exclusive resource."
+        }
+      }
+    },
+    "docs": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Where this repo keeps its requirements and their records. The implicit repository at `.`, for a manifest that declares no `repos`; declaring both is refused at load (SRV-FIX-181) — two answers to where the documents are is a manifest that means nothing.",
+      "properties": {
+        "epics": {
+          "type": "string",
+          "default": "docs/epics"
+        },
+        "tickets": {
+          "type": "string",
+          "default": "docs/tickets"
+        },
+        "reports": {
+          "type": "string",
+          "default": "docs/reports"
+        },
+        "wiki": {
+          "type": "string",
+          "description": "The directory holding this repository's own explanatory pages — whatever it calls them and however it sections them. Every `*.md` under it is one section: the tool reads each document's frontmatter through untouched and attaches meaning to none of it, so the sections, their order and their names are the repository's and never the tool's. **There is no default, and that is the point.** A repository that does not declare this key has no such surface and no rail row for one, because a default would be a directory layout the tool taught itself — which is the one thing this file exists to prevent (SRV-FEAT-304)."
+        },
+        "escapes": {
+          "type": "string",
+          "description": "The ledger of defects a gate passed — one FILE, not a directory, because the ledger is a single document a row is appended to. **No default**, for `wiki`'s reason: absent means no such surface and no rail row, and a tool that guessed a filename would be reading a repository it was never given (SRV-FEAT-304)."
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Fallback stage sequence when a ticket does not declare its own. The factory has no opinion about the names."
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "in_flight": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Which values of a ticket's own `status:` field mean a session has been launched and is expected to be working. The factory attaches no meaning to any of them and never writes one back; it needs the set to tell a stalled session (SPEC.md §3.5) from one nobody ever started, and a tool that guessed at this vocabulary would have learned a repository. Declare none and no ticket is ever reported `stalled`."
+        },
+        "done": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Which values of a ticket's own `status:` field mean its work is finished. A lane whose ticket is at one of them draws a full bar and no time left (SRV-FIX-599). The factory attaches no meaning to the words and never writes one back. Declare none and no ticket is ever done to the tool: its bar is the share of stages finished."
+        }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ticket_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Extra frontmatter fields to surface in the UI. This is how a field like `seams` reaches the screen without the factory knowing what a seam is."
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "line_prefix",
+        "frozen_after"
+      ],
+      "additionalProperties": false,
+      "description": "Which line of a ticket's §1 names what evidences a criterion, and after which stage that evidence stops being editable without asking. Both members are the repository's own words: the tool holds neither, compares `frozen_after` to the stage a run REPORTS, and looks for `line_prefix` at the start of nothing it invented. Absent means no freeze and behaviour exactly as before this key existed — a repository that never heard of it cannot tell it is there. Present, and once a run has reported that stage, a tool call whose argument names a file §1 wrote on such a line stops and asks the operator, naming the criterion whose evidence it is. It is `asked` and never `deny`, because the person who wrote the criterion is the one who may change it (SRV-FEAT-499).",
+      "properties": {
+        "line_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The literal a line of §1 begins with when it names what evidences the criterion it sits under. Everything after it on that line is the reference, and the part before `::` is the path."
+        },
+        "frozen_after": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The stage whose REPORT arms the freeze — a member of `stages`, and refused at load naming `/evidence/frozen_after` when it is not one, because a stage nobody can report is a freeze that can never fire and is indistinguishable from the feature being switched off. Never inferred from time or from git: the tool enforces what it was told."
+        }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "description": "Checks this repository wants started for it. When a run reports a stage, any role declared for that stage is started in a new lane with the prompt at `prompt_file` (SPEC.md F31). The factory attaches no meaning to a role's name and has no built-in one: `qa`, `reviewer` and `security` are the repository's words, and every word of meaning lives in the prompt file, which the repository commits.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "start_on_stage",
+          "prompt_file"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "start_on_stage": {
+            "type": "string",
+            "description": "The stage name whose report starts this role. A string compared to a string; the factory has no opinion about what it means."
+          },
+          "lane": {
+            "type": "string",
+            "default": "new",
+            "description": "`new` — a new worktree, a new branch and a new session, so the started role cannot inherit the transcript or the framing of the lane that triggered it. It is the only accepted value; anything else is refused at load rather than guessed at."
+          },
+          "prompt_file": {
+            "type": "string",
+            "description": "Relative to the repo root. Its contents are the prompt the started run is given, with `{ticket_id}`, `{ticket_path}`, `{repo_root}` and `{triggered_by_run}` substituted and nothing else read. A role naming a file that is not there makes the manifest invalid AT LOAD — a role that fails only when it is finally needed is a role that fails at the worst time."
+          },
+          "effort": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The effort a run started FOR THIS ROLE is launched at. It beats `run_effort` and the profile's `default_effort`, and only an explicit E18 `effort` beats it. The factory attaches no meaning to the value: it is the provider's word, checked against the selected profile's `efforts`. A value outside the `efforts` of a profile that declares some makes the manifest invalid AT LOAD naming this pointer — a role start that refused at start time would vanish into a log line, because F31's caller has no screen to be refused on. Absent means this role takes `run_effort`, then the profile default."
+          }
+        }
+      }
+    },
+    "run_effort": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The effort a run nobody declared a role for — the ordinary `run` — is launched at. It is the role-level value for `run`, one key here rather than a `roles.run` entry the tool would then have to treat unlike every other role: F31 gives a role a lane and a prompt, and `run` has neither. An explicit E18 `effort` beats it; it beats the selected profile's `default_effort`. A value outside the `efforts` of a profile that declares some makes the manifest invalid AT LOAD naming `/run_effort`, for the reason a role's `effort` gives."
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string",
+          "default": "claude"
+        },
+        "credentials_dir": {
+          "type": "string",
+          "description": "Where this repository's agent keeps the credentials it authenticates with. Read-bound into every lane READ-ONLY, at its real path, and it is the only path under the developer's home the tool binds besides the agent's own binary directory. A leading `~/` expands to the real home. Declared rather than discovered on purpose: there is no rule that finds one CLI's credential directory from another's, and the alternative — the tool holding a convention like `$HOME/.claude` — is the product knowledge §2 says may only arrive through this file. Absent means NO credential bind and no error, which is the safe default: a repository that has not said where its agent's credentials live gets none of the developer's home. A path that is not there makes the manifest invalid AT LOAD, because an agent that discovers mid-run that it cannot authenticate fails at the worst time."
+        },
+        "start_prompt_file": {
+          "type": "string",
+          "description": "Relative to the repo root. Its contents are the prompt a run started with no `prompt` of its own is given (SPEC.md E18), with `{ticket_id}`, `{ticket_path}`, `{repo_root}` and `{triggered_by_run}` substituted and nothing else read — the same mechanism, the same four placeholders and the same load-time refusal as a role's `prompt_file`. This is where a repository says what starting a lane MEANS; the factory has no default for it and no opinion about the words. Absent means a start with no prompt writes nothing, exactly as before this key existed. A path that is not there makes the manifest invalid AT LOAD, because a start that fails when somebody finally presses the button fails at the worst time."
+        },
+        "config_trust": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "keyed_by_path",
+            "flag"
+          ],
+          "description": "The one fact about the agent's configuration that has to be true before any lane may run, stated by the repository in the CLI's own words. Pointing an agent at a configuration directory moves EVERY piece of state that agent resolves from it, not only the one the pointing was aimed at: `SRV-FEAT-039` moved the credentials on purpose and the trust store by accident, and every run afterwards silently threw away this repository's 107 declared permissions. The tool holds none of these words — it opens `file`, looks for an object at `keyed_by_path`, finds the member whose name is this repository's root, and requires `flag` to be `true`. Absent means no check and behaviour exactly as before. Present and not satisfied makes the manifest invalid AT LOAD, naming the file and the key, because a run with no permissions works, answers and asks about everything, which is indistinguishable from the product behaving normally.",
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "The configuration file the agent will actually read. A leading `~/` expands to the real home. For a CLI pointed at a configuration directory this is a file INSIDE that directory, which is not necessarily the file the developer has been editing — the two are commonly called the same thing."
+            },
+            "keyed_by_path": {
+              "type": "string",
+              "description": "The member of that file holding an object whose member names are absolute repository paths."
+            },
+            "flag": {
+              "type": "string",
+              "description": "The member inside this repository's entry that must be `true`."
+            }
+          }
+        },
+        "permission_mode": {
+          "type": "string"
+        },
+        "allowed_tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "model": {
+          "type": "string"
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string",
+            "default": "claude"
+          },
+          "credentials_dir": {
+            "type": "string",
+            "description": "Where this repository's agent keeps the credentials it authenticates with. Read-bound into every lane READ-ONLY, at its real path, and it is the only path under the developer's home the tool binds besides the agent's own binary directory. A leading `~/` expands to the real home. Declared rather than discovered on purpose: there is no rule that finds one CLI's credential directory from another's, and the alternative — the tool holding a convention like `$HOME/.claude` — is the product knowledge §2 says may only arrive through this file. Absent means NO credential bind and no error, which is the safe default: a repository that has not said where its agent's credentials live gets none of the developer's home. A path that is not there makes the manifest invalid AT LOAD, because an agent that discovers mid-run that it cannot authenticate fails at the worst time."
+          },
+          "start_prompt_file": {
+            "type": "string",
+            "description": "Relative to the repo root. Its contents are the prompt a run started with no `prompt` of its own is given (SPEC.md E18), with `{ticket_id}`, `{ticket_path}`, `{repo_root}` and `{triggered_by_run}` substituted and nothing else read — the same mechanism, the same four placeholders and the same load-time refusal as a role's `prompt_file`. This is where a repository says what starting a lane MEANS; the factory has no default for it and no opinion about the words. Absent means a start with no prompt writes nothing, exactly as before this key existed. A path that is not there makes the manifest invalid AT LOAD, because a start that fails when somebody finally presses the button fails at the worst time."
+          },
+          "config_trust": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "keyed_by_path",
+              "flag"
+            ],
+            "description": "The one fact about the agent's configuration that has to be true before any lane may run, stated by the repository in the CLI's own words. Pointing an agent at a configuration directory moves EVERY piece of state that agent resolves from it, not only the one the pointing was aimed at: `SRV-FEAT-039` moved the credentials on purpose and the trust store by accident, and every run afterwards silently threw away this repository's 107 declared permissions. The tool holds none of these words — it opens `file`, looks for an object at `keyed_by_path`, finds the member whose name is this repository's root, and requires `flag` to be `true`. Absent means no check and behaviour exactly as before. Present and not satisfied makes the manifest invalid AT LOAD, naming the file and the key, because a run with no permissions works, answers and asks about everything, which is indistinguishable from the product behaving normally.",
+            "properties": {
+              "file": {
+                "type": "string",
+                "description": "The configuration file the agent will actually read. A leading `~/` expands to the real home. For a CLI pointed at a configuration directory this is a file INSIDE that directory, which is not necessarily the file the developer has been editing — the two are commonly called the same thing."
+              },
+              "keyed_by_path": {
+                "type": "string",
+                "description": "The member of that file holding an object whose member names are absolute repository paths."
+              },
+              "flag": {
+                "type": "string",
+                "description": "The member inside this repository's entry that must be `true`."
+              }
+            }
+          },
+          "permission_mode": {
+            "type": "string"
+          },
+          "allowed_tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "model": {
+            "type": "string"
+          },
+          "driver": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "codex"
+            ]
+          },
+          "models": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "default_model": {
+            "type": "string"
+          },
+          "efforts": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "The reasoning efforts this profile may be launched at, in the PROVIDER's own words. The tool holds no list of levels and maps nothing between providers: `claude --help` (2.1.272) prints `low, medium, high, xhigh, max` and the codex app-server's `ReasoningEffort` (0.162.0-alpha.17.2) is `A non-empty reasoning effort value advertised by the model` with no enum at all, so a level set written into the tool would be wrong for one provider the day either changes. Absent means this profile is launched with no effort at all, exactly as before this key existed, and its runs record `null` — a profile with no `efforts` opts out of the whole mechanism, and `run_effort` and a role's `effort` do not reach it. Present, it is the closed set every resolved effort is checked against."
+          },
+          "default_effort": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The effort this profile is launched at when neither the request nor the lane's role names one. It must be one of this profile's own `efforts`; a value outside them makes the manifest invalid AT LOAD naming this pointer, because a default that can never be selected is one nobody finds until a run is already at the wrong effort."
+          }
+        },
+        "required": [
+          "driver",
+          "command",
+          "models",
+          "default_model"
+        ]
+      }
+    },
+    "default_agent": {
+      "type": "string"
+    },
+    "trees": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Named agent-tree selections. Removing a preset makes it unselectable. The tool knows no agent names.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "decider",
+          "agents"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "decider": {
+            "type": "string",
+            "enum": [
+              "rules"
+            ]
+          },
+          "agents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "continuation": {
+            "type": "string",
+            "enum": ["goal"]
+          },
+          "compact_on_stage": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "token_budget": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "default_tree": {
+      "type": "string",
+      "description": "Required when trees is declared; names one preset in trees."
+    }
+  }
+}

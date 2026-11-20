@@ -1,0 +1,1320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://factory.local/socket.schema.json",
+  "title": "Factory socket contract",
+  "description": "Every frame on /ws. One file, from which the client's TypeScript types are generated, so a field added on the server cannot silently disagree with the field the UI reads. Later tickets add entries under $defs/message; nothing below the envelope changes when they do.",
+  "contract": "factory-v0.1.0",
+  "type": "object",
+  "properties": {
+    "m": {
+      "type": "string",
+      "description": "The message name. The whole of the framing: a frame is named, and the name decides the rest."
+    },
+    "ts": {
+      "$ref": "#/$defs/iso"
+    },
+    "seq": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "description": "Per lane-run, monotonic, and set on transcript frames only. Everything else is state and carries no sequence."
+    }
+  },
+  "required": [
+    "m"
+  ],
+  "oneOf": [
+    {
+      "$ref": "#/$defs/message/subscribe"
+    },
+    {
+      "$ref": "#/$defs/message/resume"
+    },
+    {
+      "$ref": "#/$defs/message/ping"
+    },
+    {
+      "$ref": "#/$defs/message/hello"
+    },
+    {
+      "$ref": "#/$defs/message/snapshot"
+    },
+    {
+      "$ref": "#/$defs/message/catalog.changed"
+    },
+    {
+      "$ref": "#/$defs/message/resource"
+    },
+    {
+      "$ref": "#/$defs/message/stage"
+    },
+    {
+      "$ref": "#/$defs/message/lane.state"
+    },
+    {
+      "$ref": "#/$defs/message/lane.metrics"
+    },
+    {
+      "$ref": "#/$defs/message/lane.membership"
+    },
+    {
+      "$ref": "#/$defs/message/lane.words"
+    },
+    {
+      "$ref": "#/$defs/message/isolation"
+    },
+    {
+      "$ref": "#/$defs/message/command"
+    },
+    {
+      "$ref": "#/$defs/message/run"
+    },
+    {
+      "$ref": "#/$defs/message/transcript"
+    },
+    {
+      "$ref": "#/$defs/message/permission.request"
+    },
+    {
+      "$ref": "#/$defs/message/permission.resolved"
+    },
+    {
+      "$ref": "#/$defs/message/rules"
+    },
+    {
+      "$ref": "#/$defs/message/pong"
+    },
+    {
+      "$ref": "#/$defs/message/error"
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "iso": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "UTC, second resolution. Clocks tick client-side from these, which is why no server timer exists for state."
+    },
+    "scope": {
+      "type": "object",
+      "description": "A named region of state a surface reads. Exactly one key: the scope is the key, and the key is what a delta is routed by.",
+      "properties": {
+        "requirements": {
+          "const": true
+        },
+        "ticket": {
+          "type": "string"
+        },
+        "lane": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1
+    },
+    "entry": {
+      "type": "object",
+      "description": "One transcript entry, in E8's shape: `{seq,ts,kind,…payload}`. Its kinds belong to the module that parses the agent's output; the socket carries it and forms no opinion about it. What the socket DOES have an opinion about is that an entry is not a frame — `m` and a nested `entry` are refused by name, because until SRV-FIX-049 a lane snapshot's `entries` were whole transcript frames and every one of them validated: `data` said only `object`, so the one place the two shapes could have been compared said nothing about either.",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ts": {
+          "$ref": "#/$defs/iso"
+        },
+        "kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "ts",
+        "kind"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "m"
+            ]
+          },
+          {
+            "required": [
+              "entry"
+            ]
+          }
+        ],
+        "$comment": "An entry carrying `m` is a frame that got poured into an entry list; an entry carrying `entry` is a frame one level deeper. Both were the defect."
+      }
+    },
+    "message": {
+      "subscribe": {
+        "title": "subscribe",
+        "direction": "client",
+        "description": "A surface mounts. The server replies with exactly one snapshot for that scope and then sends that scope's deltas, and no other scope's.",
+        "properties": {
+          "m": {
+            "const": "subscribe"
+          },
+          "scope": {
+            "$ref": "#/$defs/scope"
+          }
+        },
+        "required": [
+          "m",
+          "scope"
+        ]
+      },
+      "resume": {
+        "title": "resume",
+        "direction": "client",
+        "description": "The socket reconnected and the client already holds part of a lane's transcript. The server replays from after_seq; when the log cannot cover the gap it sends a snapshot with replaces_tail instead, and the client discards its tail rather than merging into a hole.",
+        "properties": {
+          "m": {
+            "const": "resume"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "after_seq": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "m",
+          "lane",
+          "after_seq"
+        ]
+      },
+      "ping": {
+        "title": "ping",
+        "direction": "client",
+        "description": "Every 10 s of client idleness, so a dead connection is noticed in about 15 s rather than at the next user action. The only periodic thing in the system.",
+        "properties": {
+          "m": {
+            "const": "ping"
+          }
+        },
+        "required": [
+          "m"
+        ]
+      },
+      "hello": {
+        "title": "hello",
+        "direction": "server",
+        "description": "Sent once per connection the moment it opens — per connection, not once at boot, because a server that greets only its first client looks identical to a working one until the second tab opens.",
+        "properties": {
+          "m": {
+            "const": "hello"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "factory": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "factory"
+        ]
+      },
+      "snapshot": {
+        "title": "snapshot",
+        "direction": "server",
+        "description": "The full state for one scope, and the only frame that replaces state; every other frame patches. Sent after subscribe, and after a resume the log cannot cover.",
+        "properties": {
+          "m": {
+            "const": "snapshot"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "For a lane scope, the sequence the snapshot is current as of; null for every other scope."
+          },
+          "scope": {
+            "$ref": "#/$defs/scope"
+          },
+          "data": {
+            "type": "object",
+            "description": "The shape of the HTTP endpoint that answers the same question: E3 for requirements, E5 for a ticket, E8 for a lane's transcript. `entries` is named here rather than left to `object`, because `object` is what let a lane snapshot ship E8's field name over M5's frames for twelve tickets while every socket assertion stayed green (SRV-FIX-049).",
+            "properties": {
+              "entries": {
+                "type": "array",
+                "description": "E8's `[{seq,ts,kind,…payload}]`, present on a lane scope. Entries, never frames: the client reads this list as entries and draws a member with no declared `kind` as nothing, so a frame here is a blank transcript.",
+                "items": {
+                  "$ref": "#/$defs/entry"
+                }
+              }
+            }
+          },
+          "replaces_tail": {
+            "type": "boolean",
+            "description": "Set when this snapshot answers a resume the log could not cover. The client discards what it holds for the scope instead of merging."
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "scope",
+          "data"
+        ]
+      },
+      "catalog.changed": {
+        "title": "catalog.changed",
+        "direction": "server",
+        "description": "A watched document changed on disk. Routed to the scopes it affects and to no others; the client refetches exactly that document.",
+        "properties": {
+          "m": {
+            "const": "catalog.changed"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "kind": {
+            "enum": [
+              "epic",
+              "ticket",
+              "report"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "change": {
+            "enum": [
+              "created",
+              "modified",
+              "deleted"
+            ]
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "kind",
+          "id",
+          "path",
+          "change"
+        ]
+      },
+      "resource": {
+        "title": "resource",
+        "direction": "server",
+        "description": "M8 — an exclusive resource was claimed, released, or its queue changed. This is how a `queued` lane learns it is next. `held_by` is null when nobody holds it, and `queue` is the FIFO order, visible on purpose: a queue nobody can see is a queue nobody trusts.",
+        "properties": {
+          "m": {
+            "const": "resource"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "name": {
+            "type": "string"
+          },
+          "exclusive": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "held_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "queue": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "name",
+          "exclusive",
+          "held_by",
+          "queue"
+        ]
+      },
+      "stage": {
+        "title": "stage",
+        "direction": "server",
+        "description": "M3 — a run reported the stage it reached (E22), or a lane's ticket document changed on disk — its declared sequence or its `status:` (SRV-FIX-599), so a ticket set done fills its bars with no reload. Sent once per lane the ticket holds. STAGE NAMES ARE STRINGS: there is no built-in sequence, no meaning attached to `GATE` or `QA`, and no cap on a round — a retry limit belongs to the repository's process and not to this tool (SPEC.md §10). The tool stores what was reported and never infers a stage from what the agent did. This frame is also why no `progress.sh` has to be copied into a target repository: the URL and a token arrive in the run's environment, so reporting a stage is one HTTP request and the tool works out which run made it.",
+        "properties": {
+          "m": {
+            "const": "stage"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ticket_id": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "1-based position in the declared sequence. ZERO means the sequence does not contain this name — accepted, recorded and reported rather than refused, because a mismatch is a fact about the repository and not an error. `name` is what was reported either way."
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The declared sequence's length — the ticket's own, the manifest's only when the ticket declares none."
+              },
+              "name": {
+                "type": "string",
+                "description": "The string the agent reported, verbatim."
+              },
+              "round": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many times this stage has been entered — counted only when the reporter sent no `round` of its own. No cap: `round 97` is recorded as 97."
+              },
+              "of": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Reported, never invented. One that says `round 2 of 4` gets that caption because it said so; with nothing said this is the round itself."
+              },
+              "source": {
+                "enum": [
+                  "ticket",
+                  "manifest"
+                ],
+                "description": "Whose sequence the index was measured against — the ticket's own `stages:` or the manifest's fallback."
+              }
+            },
+            "required": [
+              "index",
+              "total",
+              "name",
+              "round",
+              "of",
+              "source"
+            ]
+          },
+          "progress_pct": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "The lane's bar, the same number E9 serves for it: the share of the ticket's own sequence that is finished, or 100 once the ticket's `status:` is one the manifest declares done (SRV-FIX-599). The client draws it and never derives it."
+          },
+          "remaining_s": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Seconds the stages still ahead are expected to take at this frame's `ts`, from the medians of this workspace's measured stage durations — a stage nobody ever measured adds nothing; `null` when a stage ahead has only one or two measurements or none ahead has any, `0` when the ticket is done. The same number E9 serves."
+          },
+          "regressed_from": {
+            "type": "string",
+            "description": "The stage this one came back from, present only when the work went BACKWARDS — the reported stage is earlier in the sequence than the last one, and both are in it. The strip stays linear (§8 D2); this is what the caption and the transcript have that the drawing does not."
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "ticket_id",
+          "stage",
+          "progress_pct",
+          "remaining_s"
+        ]
+      },
+      "lane.state": {
+        "title": "lane.state",
+        "direction": "server",
+        "description": "M2 — a state a surface renders has changed. One frame per change, never a periodic tick: the server compares what it last sent for this row and sends nothing when nothing moved, which is why a lane falling silent is announced exactly once and a quiet lane produces no traffic at all. Two shapes, one message, because there are two different nouns. A LANE frame carries the three axes of SPEC.md §3.2. A TICKET frame carries §3.5's `delivery` with `lane: null`, because a ticket nobody has opened a lane for still has a delivery state and `ticket_id` names the row the client patches. At least one of the two is always present. This frame is what makes derived state obey the client's no-polling rule: the tool looks at the world on a worker and tells the browser when the answer moved.",
+        "properties": {
+          "m": {
+            "const": "lane.state"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ticket_id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "object",
+            "description": "SPEC.md §3.2's three axes, NEVER flattened into one status: three members, each derived from a different input, and no fourth member ranking them. The prototype flattened them and a stale `quiet` overwrote a live `running` — a lane that was working looked like a lane that had stopped.",
+            "properties": {
+              "process": {
+                "enum": [
+                  "not_started",
+                  "queued",
+                  "running",
+                  "blocked",
+                  "idle",
+                  "finished",
+                  "crashed",
+                  "killed"
+                ],
+                "description": "Where the process is. `crashed` is it dying on its own and `killed` is a person killing it: not the same fact, and the RUNS table shows them differently."
+              },
+              "motion": {
+                "type": "object",
+                "description": "Whether anything is arriving, and nothing else. `silent` begins after 120 s with no frame from the process — a compile or a test run legitimately takes a minute, and two minutes of nothing does not happen in a healthy run. Nothing about that number is repository-specific, so it is not a manifest field.",
+                "properties": {
+                  "value": {
+                    "enum": [
+                      "producing",
+                      "silent",
+                      null
+                    ]
+                  },
+                  "silent_for_s": {
+                    "type": "integer"
+                  },
+                  "since": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the current stretch of quiet began. The client ticks the displayed number from this and needs no frame to do it: a counter that needs a frame per second is a counter that dies with the socket."
+                  }
+                },
+                "required": [
+                  "value",
+                  "silent_for_s",
+                  "since"
+                ]
+              },
+              "evidence": {
+                "enum": [
+                  "nothing_claimed",
+                  "claimed_unproven",
+                  "claimed_proven"
+                ],
+                "description": "Derived from the report document, never reported by an agent (SPEC.md §3.4): the tool reads whether a run id it assigned appears in the text, and forms no opinion about the contents."
+              },
+              "stopped": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "SRV-FEAT-415 — why this lane's round is over and since when, or null while it is still going. `process` cannot answer it: `idle` means the agent's process is alive and its turn is over, so an agent that FINISHED and one that stopped to ask a question are one value. Four situations shared the words `waiting for you` until this existed. `reason` is `work_landed` (the work is on the base branch and there is nothing left in the lane), `holds_work` (commits nobody else can see — releasing this lane would strand them), `crashed`, `never_started`, or `ended`.",
+                "required": [
+                  "reason",
+                  "seconds",
+                  "since"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "work_landed",
+                      "holds_work",
+                      "crashed",
+                      "never_started",
+                      "ended"
+                    ]
+                  },
+                  "seconds": {
+                    "type": "integer",
+                    "description": "How long it has been stopped. A boolean cannot tell four minutes from four days, and a lane sat for 356 of them unnoticed."
+                  },
+                  "since": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "ISO-8601, or null if never ran."
+                  }
+                }
+              },
+              "blocked": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "Present when a person owes this run an answer. A correct agent waiting on a person is not a stalled one, so this is decided before `running` and is never derived from silence.",
+                "properties": {
+                  "reason": {
+                    "enum": [
+                      "permission",
+                      "question"
+                    ]
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reason",
+                  "request_id"
+                ]
+              },
+              "alarm": {
+                "type": "boolean",
+                "description": "True for exactly two combinations and no others (SPEC.md §3.2): `running + silent`, and `finished + claimed_unproven`. Which pair earns a border is decided once, on the server, for the same reason the counter is: two implementations of one rule drift, and the one that drifts is the one nobody is looking at."
+              }
+            },
+            "required": [
+              "alarm",
+              "blocked",
+              "evidence",
+              "motion",
+              "process",
+              "stopped"
+            ]
+          },
+          "waiting_for": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The exclusive resource a `queued` lane is waiting on, who holds it, and its place in the queue. A queue nobody can see is a queue nobody trusts."
+          },
+          "delivery": {
+            "type": "object",
+            "description": "SPEC.md §3.5, the same object E3/E4/E5 carry. The socket forms no opinion about it.",
+            "properties": {
+              "state": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "needs_you": {
+            "type": "boolean",
+            "description": "SPEC.md §3.3's set, computed server-side so the row, the list and the top bar's counter cannot disagree. A ticket counts once however many clauses it satisfies."
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "ticket_id",
+          "needs_you"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "state"
+            ]
+          },
+          {
+            "required": [
+              "delivery"
+            ]
+          }
+        ]
+      },
+      "lane.metrics": {
+        "title": "lane.metrics",
+        "direction": "server",
+        "description": "M4 — a turn ended, or the agent reported what it has spent mid-turn. NEVER on a timer: `elapsed_s` is sent so a card can start its clock and the client ticks it from there, which is what lets a quiet lane produce no traffic at all (SPEC.md §4.4). `turn.cost_usd` is the turn's OWN cost, the delta — the CLI reports a session total, and summing totals overstates a run by more with every turn.",
+        "properties": {
+          "m": {
+            "const": "lane.metrics"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "elapsed_s": {
+            "type": "integer",
+            "description": "Since the lane was claimed — the same number the card shows."
+          },
+          "cost_usd": {
+            "type": "number",
+            "description": "The run's total so far, as the CLI reports it."
+          },
+          "remaining_s": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "The lane's time left at this frame's `ts`, the same number E9 and M3 serve, so a card can count it down on the clock it already ticks `elapsed_s` with."
+          },
+          "turn": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "integer"
+              },
+              "cost_usd": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "n",
+              "cost_usd"
+            ]
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "elapsed_s",
+          "cost_usd",
+          "turn",
+          "remaining_s"
+        ]
+      },
+      "lane.membership": {
+        "title": "lane.membership",
+        "direction": "server",
+        "description": "M17 — the lane SET changed: E12 claimed one, E13 released one, or the tool claimed one for itself (F31). Every other lane frame patches a row that already exists; this is the only one that says a row appeared or went away, which is why it is a message of its own and not a flag on `lane.state` — a released lane has no state to render. Routed to the lane, its ticket and the requirements surface, so a lane the tool starts by itself reaches a screen that has never heard of it. The client re-reads E9 on `claimed` and drops the row on `released`.",
+        "properties": {
+          "m": {
+            "const": "lane.membership"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "ticket_id": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          },
+          "change": {
+            "enum": [
+              "claimed",
+              "released"
+            ]
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "ticket_id",
+          "workspace",
+          "change"
+        ]
+      },
+      "lane.words": {
+        "title": "lane.words",
+        "direction": "server",
+        "description": "M18 — the agent in a lane said something or called something, and this is that one line. Not a flag on `lane.state`: `lane.state` fires when an AXIS of a lane's state changes, and last words change on every entry, so a frame carrying `state`, `delivery` and `waiting_for` on every sentence the agent writes is the wrong shape for the rate. It NEVER carries `null` — a frame is sent only when there are words, and the `null` a new run starts with reaches the client through the E9 re-read `lane.membership` already triggers and through `lane.state`'s process transition to `running`. Coalesced per lane to at most one frame per 2 s with the trailing value winning: an agent emits several entries a second at peak and a person reads the line once every few seconds. That is a debounce armed by an entry, never a periodic tick — nothing fires because time passed with nothing new. Routed to the same scopes `lane.state` reaches, because the lanes surface subscribes to `requirements` (SPEC.md §4.14) and must hear it.",
+        "properties": {
+          "m": {
+            "const": "lane.words"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "ticket_id": {
+            "type": "string"
+          },
+          "last_words": {
+            "type": "object",
+            "description": "The same object E9 serves as `lanes[].last_words`, byte for byte.",
+            "required": [
+              "kind",
+              "text",
+              "at"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "prose",
+                  "tool",
+                  "file_edit"
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "at": {
+                "$ref": "#/$defs/iso"
+              }
+            }
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "ticket_id",
+          "last_words"
+        ]
+      },
+      "isolation": {
+        "title": "isolation",
+        "direction": "server",
+        "description": "M9 — the lane's confinement refused an access, naming the path it tried. Enforcement is a mount namespace the tool builds for every process a lane starts, so the refusal happens in the kernel and inside the child; this frame is how it stops being silent, because a boundary that refuses without reporting is half of what went wrong the first time. `refused` is always true: the boundary reports what it stopped, never what it allowed. Best-effort — a program that swallows its own error message produces a refusal nobody sees, and the access still fails.",
+        "properties": {
+          "m": {
+            "const": "isolation"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "write",
+              "read",
+              "access"
+            ],
+            "description": "Inferred from the error the kernel gave the child, not observed at the syscall."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path that was refused."
+          },
+          "refused": {
+            "const": true
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "operation",
+          "path",
+          "refused"
+        ]
+      },
+      "command": {
+        "title": "command",
+        "direction": "server",
+        "description": "M10 — output from a command the workspace itself declared (E19), as it arrives, and once more when the process exits. `chunk` is raw output, not lines: a build that prints a progress bar with no newline for two minutes would otherwise look dead. Exactly one of `chunk` and `exit_code` is present — a reader that has seen `exit_code` is done. The tool has no opinion about what the output means or about the exit code: the number is a fact reported, and whether a gate passing matters is the repository's business.",
+        "properties": {
+          "m": {
+            "const": "command"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "command_id": {
+            "type": "string"
+          },
+          "which": {
+            "enum": [
+              "build",
+              "gate",
+              "review"
+            ]
+          },
+          "chunk": {
+            "type": "string",
+            "description": "Output exactly as the process wrote it, stdout and stderr interleaved as they arrived."
+          },
+          "exit_code": {
+            "type": "integer",
+            "description": "The process's own exit status; 128+n when it was killed by signal n, which is the shell's own convention. Reported, never interpreted."
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "command_id",
+          "which"
+        ]
+      },
+      "run": {
+        "title": "run",
+        "direction": "server",
+        "description": "M11 — a run started, and again when it reached a terminal outcome. E16 answers 202, so the outcome of an `end` has to arrive somewhere and this is where. The terminal words are the tool's own record of which verb it was ASKED for, not an inference from an exit status: `crashed` (it died on its own) and `killed` (a person killed it) are not the same fact and the RUNS table shows them differently.",
+        "properties": {
+          "m": {
+            "const": "run"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string",
+            "description": "Injected into the process as FACTORY_RUN_ID, so a report can cite the run it was actually done in."
+          },
+          "n": {
+            "type": "integer",
+            "description": "Which run this is for the lane, 1-based."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "running",
+              "ended cleanly",
+              "killed by you",
+              "completed",
+              "crashed"
+            ]
+          },
+          "started_iso": {
+            "$ref": "#/$defs/iso"
+          },
+          "ended_iso": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null while the run is live."
+          },
+          "stage": {
+            "type": "integer"
+          },
+          "duration_s": {
+            "type": "integer"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "exit_code": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "What the kernel said, beside the verb the tool was asked for. Null while the run is live and null when the process did not exit normally — then `signal` is the number. `outcome` says which verb; these say which crash."
+          },
+          "signal": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The signal that ended the process, or null when it exited normally. Exactly one of `exit_code` and `signal` is ever a number: a run that RETURNED 9 and a run KILLED WITH 9 are different facts, which is SPEC.md §3.2's rule about `crashed` and `killed` one level down."
+          },
+          "agent": {
+            "type": "string"
+          },
+          "driver": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "cost_known": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "run_id",
+          "n",
+          "outcome",
+          "started_iso",
+          "ended_iso",
+          "stage",
+          "duration_s",
+          "cost_usd"
+        ]
+      },
+      "transcript": {
+        "title": "transcript",
+        "direction": "server",
+        "description": "One entry as it is parsed out of a run's output. The only sequenced frame, append-only, and the only one resume replays.",
+        "properties": {
+          "m": {
+            "const": "transcript"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lane": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "entry": {
+            "$ref": "#/$defs/entry"
+          },
+          "patch": {
+            "const": true,
+            "description": "This frame patches the entry already sent at this seq — SPEC.md M5's one exception to append-only. It exists for two things and no others: a tool entry gaining its result, and a §4.6 `silence` rule gaining the length the gap really was when output ends it. Both are one entry becoming complete; a second entry for either would double-count what happened. Absent on every other frame."
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "run_id",
+          "entry"
+        ]
+      },
+      "permission.request": {
+        "title": "permission.request",
+        "direction": "server",
+        "description": "M6 — the agent asked for permission, and the run is stopped dead until somebody answers. Two fields carry the whole reason this message exists rather than a yes/no prompt. `rule_that_would_be_written` is the exact rule `always` will write — literal, escaped, never widened — so agreeing to it is agreeing to something readable rather than to a blank cheque. `nearest_miss` is present when an existing rule for this same tool ALMOST matched, and it names which one and where it diverged: a rule that nearly matched and a rule that is missing are different problems with different fixes, and a request that cannot tell them apart leaves the person clicking `always` again. This has already cost a run. `expires_at` is null on purpose and stays null: a request that times out into a denial produces a run that failed for a reason nobody saw.",
+        "properties": {
+          "m": {
+            "const": "permission.request"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input_summary": {
+            "type": "string",
+            "description": "The one string the rule is about — a Bash command, a file path — as it will be shown."
+          },
+          "rule_that_would_be_written": {
+            "type": "string",
+            "description": "`Tool` or `Tool(argument)`, the argument literal and escaped. The tool does not invent rules: this is what `always` writes and nothing broader."
+          },
+          "nearest_miss": {
+            "type": "object",
+            "description": "The standing rule that came closest, and why it did not match. Compared on the tool name and then on the argument against the pattern up to the first divergence; a rule for a different tool is never reported, because it did not nearly match anything.",
+            "properties": {
+              "rule_id": {
+                "type": "string"
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "source": {
+                "enum": [
+                  "manifest",
+                  "granted"
+                ]
+              },
+              "differs_on": {
+                "enum": [
+                  "argument",
+                  "tool"
+                ]
+              },
+              "matched_prefix": {
+                "type": "string",
+                "description": "The leading part of the argument the pattern accepted before it stalled."
+              },
+              "why_it_did_not_match": {
+                "type": "string",
+                "description": "One sentence naming the prefix, what the pattern required next, and what the argument had there instead."
+              }
+            },
+            "required": [
+              "rule_id",
+              "pattern",
+              "source",
+              "differs_on",
+              "matched_prefix",
+              "why_it_did_not_match"
+            ]
+          },
+          "frozen_by": {
+            "type": "object",
+            "description": "Present only when this request was asked because the file it names is EVIDENCE — a path the ticket's §1 wrote on a line the manifest's `evidence.line_prefix` names, in a run that has already reported `evidence.frozen_after`. The standing policy did not decide this one and no grant can: an `always` answered here is still written and still listed by E11, and the next touch of the same file is asked again, because the person who wrote the criterion is the one who may change it. Absent on every other request, so a surface that does not read it draws exactly what it drew before (SRV-FEAT-499).",
+            "additionalProperties": false,
+            "properties": {
+              "ticket_id": {
+                "type": "string",
+                "description": "The ticket whose §1 named this file."
+              },
+              "criterion": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The number of the criterion in that §1 whose evidence line carries the path."
+              }
+            },
+            "required": [
+              "ticket_id",
+              "criterion"
+            ]
+          },
+          "expires_at": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "request_id",
+          "tool",
+          "input_summary",
+          "rule_that_would_be_written",
+          "expires_at"
+        ]
+      },
+      "permission.resolved": {
+        "title": "permission.resolved",
+        "direction": "server",
+        "description": "M7 — a person answered at E23, or the request was voided because the run it belonged to is gone. Sent to EVERY client rather than routed to a scope, so a request answered in one tab stops waiting in the other. `voided` is not a fourth thing a person can click: it is what the tool does when the run dies, and it exists so that a request is never left waiting for ever — and so that an answer arriving afterwards is refused instead of granting a standing permission nobody meant to grant.",
+        "properties": {
+          "m": {
+            "const": "permission.resolved"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "lane": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "once",
+              "always",
+              "deny",
+              "voided"
+            ]
+          },
+          "rule_id": {
+            "type": "string",
+            "description": "Present only for `always`: the one rule that was written."
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "lane",
+          "request_id",
+          "decision"
+        ]
+      },
+      "rules": {
+        "title": "rules",
+        "direction": "server",
+        "description": "M12 — a rule was granted or revoked, or the policy changed. Sent to every client, so a second tab cannot show a policy that is no longer in force. `source` is the whole of the difference between the two kinds of rule: a rule declared in the manifest is a committed file's, is listed as such, and cannot be revoked from a UI — a UI that silently overrides a committed file is how a repository stops meaning what it says.",
+        "properties": {
+          "m": {
+            "const": "rules"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "policy": {
+            "enum": [
+              "ask_all",
+              "edit_free",
+              "never_ask"
+            ]
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rule_id": {
+                  "type": "string"
+                },
+                "pattern": {
+                  "type": "string"
+                },
+                "source": {
+                  "enum": [
+                    "manifest",
+                    "granted"
+                  ]
+                },
+                "granted_iso": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Null for a manifest rule: it was never granted, it was declared."
+                },
+                "match_count": {
+                  "type": "integer",
+                  "description": "How often this rule has answered a request in this tool process. Deliberately not written to the policy file, which would give a committed file a permanent diff."
+                },
+                "revocable": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "rule_id",
+                "pattern",
+                "source",
+                "granted_iso",
+                "match_count",
+                "revocable"
+              ]
+            }
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "policy",
+          "rules"
+        ]
+      },
+      "pong": {
+        "title": "pong",
+        "direction": "server",
+        "description": "The answer to a ping. Bare: it carries no state, so a liveness check can never be mistaken for data arriving.",
+        "properties": {
+          "m": {
+            "const": "pong"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq"
+        ]
+      },
+      "error": {
+        "title": "error",
+        "direction": "server",
+        "description": "A frame the server refused. The connection stays open and keeps delivering: the tool serves a browser left open for days, and a socket that drops on the first surprise turns every later ticket into a debugging session. Same shape as the HTTP error convention.",
+        "properties": {
+          "m": {
+            "const": "error"
+          },
+          "ts": {
+            "$ref": "#/$defs/iso"
+          },
+          "seq": {
+            "type": "null"
+          },
+          "code": {
+            "enum": [
+              "bad_frame",
+              "unknown_message",
+              "unknown_scope"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "m",
+          "ts",
+          "seq",
+          "code",
+          "message"
+        ]
+      }
+    }
+  }
+}
