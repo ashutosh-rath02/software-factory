@@ -21,7 +21,7 @@ software-factory/
 Linux, or Windows through WSL2 with Ubuntu. The server reads `/proc` and the scripts are bash, so
 it does not build natively on Windows or macOS.
 
-Packages: a C++17 compiler, cmake, Boost headers, OpenSSL, glog, Node 20 or newer, Python 3.
+Packages: a C++17 compiler, cmake, Boost headers, OpenSSL, glog, bubblewrap (lane sandboxing), Node 20 or newer, Python 3.
 On Ubuntu, `scripts/setup-ubuntu.sh` installs all of them.
 
 ## Running it
