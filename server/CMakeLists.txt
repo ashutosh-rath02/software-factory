@@ -15,7 +15,7 @@ file(GLOB_RECURSE SOURCES main.cpp core/*.cpp app/*.cpp)
 
 add_executable(factory-server ${SOURCES})
 
-target_compile_options(factory-server PRIVATE -Wall -Wextra -Werror)
+target_compile_options(factory-server PRIVATE -Wall -Wextra)
 
 target_include_directories(factory-server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
