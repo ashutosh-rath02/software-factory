@@ -40,7 +40,7 @@ void core::Worker::stop()
 
 void core::Worker::post(std::function<void()> task)
 {
-    workerIo_.post([task = std::move(task)] {
+    boost::asio::post(workerIo_, [task = std::move(task)] {
         try {
             task();
         } catch (std::exception& e) {
@@ -63,7 +63,7 @@ void core::Worker::postSerialized(std::function<void()> task)
 void core::Worker::post(std::function<void()> task, std::function<void()> callback)
 {
     auto& engineIo = Engine::instance().service();
-    workerIo_.post([task = std::move(task), callback = std::move(callback), &engineIo]() {
+    boost::asio::post(workerIo_, [task = std::move(task), callback = std::move(callback), &engineIo]() {
         try {
             task();
         } catch (std::exception& e) {
