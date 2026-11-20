@@ -14,6 +14,7 @@ software-factory/
   client/    React, TypeScript and Vite: services, pages, components
   docs/      technical and product documentation
   scripts/   environment setup
+  mcp/       optional MCP server so Claude Code can drive the API
 ```
 
 ## Requirements
