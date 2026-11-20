@@ -43,9 +43,7 @@ void core::Engine::execute_()
 {
     while (true) {
         try {
-            boost::system::error_code ec;
-            service_.run(ec);
-            if (ec) LOG(ERROR) << "IO error: " << ec;
+            service_.run();
             break;
         } catch (std::exception& ex) {
             LOG(ERROR) << "Exception: " << ex.what();
