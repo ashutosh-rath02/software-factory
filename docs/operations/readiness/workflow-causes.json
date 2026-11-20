@@ -55,7 +55,7 @@
           "argv": [
             "/bin/sh",
             "-c",
-            "root=$(git rev-parse --show-toplevel) || exit; mkdir -p \"$root/.factory/temp\" && cd \"$root\" && FACTORY_TEST_SERVER_BINARY=\".cache/server/build/factory-server\" FACTORY_SCHEMA=\"$root/docs/technical/contracts/manifest.schema.json\" FACTORY_REAL_CLI=0 PYTHONDONTWRITEBYTECODE=1 TMPDIR=\"$root/.factory/temp\" python3 -m pytest -q -p no:cacheprovider --basetemp=.factory/temp/native-f9-isolation server/tests/test_confine.py::test_a_lane_cannot_read_the_rest_of_your_home"
+            "root=$(git rev-parse --show-toplevel) || exit; mkdir -p \"$root/.factory/temp\" && cd \"$root\" && FACTORY_TEST_SERVER_BINARY=\"$HOME/software-factory/.cache/server/build/factory-server\" FACTORY_SCHEMA=\"$root/docs/technical/contracts/manifest.schema.json\" FACTORY_REAL_CLI=0 PYTHONDONTWRITEBYTECODE=1 TMPDIR=\"$root/.factory/temp\" python3 -m pytest -q -p no:cacheprovider --basetemp=.factory/temp/native-f9-isolation server/tests/test_confine.py::test_a_lane_cannot_read_the_rest_of_your_home"
           ],
           "timeout_seconds": 3
         }

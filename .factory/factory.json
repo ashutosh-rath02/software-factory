@@ -12,9 +12,9 @@
         "~/.local/lib",
         "~/.nvm",
         "/opt/google/chrome",
-        "server/tools/ticket_readiness.py",
-        "docs/operations/readiness/workflow-causes.json",
-        ".cache/server/build/factory-server"
+        "~/software-factory/server/tools/ticket_readiness.py",
+        "~/software-factory/docs/operations/readiness/workflow-causes.json",
+        "~/software-factory/.cache/server/build/factory-server"
       ],
       "start_preflight": {
         "command": "python3 server/tools/ticket_readiness.py check --registry docs/operations/readiness/workflow-causes.json --output .factory/readiness-check.json --captures .factory/readiness-probes --ticket \"$FACTORY_TICKET_ID\" --workspace \"$FACTORY_WORKSPACE\" --profile \"$FACTORY_AGENT_PROFILE\"",
@@ -37,9 +37,9 @@
         "~/.nvm",
         "~/.gitconfig",
         "/opt/google/chrome",
-        "server/tools/ticket_readiness.py",
-        "docs/operations/readiness/workflow-causes.json",
-        ".cache/server/build/factory-server"
+        "~/software-factory/server/tools/ticket_readiness.py",
+        "~/software-factory/docs/operations/readiness/workflow-causes.json",
+        "~/software-factory/.cache/server/build/factory-server"
       ],
       "start_preflight": {
         "command": "python3 server/tools/ticket_readiness.py check --registry docs/operations/readiness/workflow-causes.json --output .factory/readiness-check.json --captures .factory/readiness-probes --ticket \"$FACTORY_TICKET_ID\" --workspace \"$FACTORY_WORKSPACE\" --profile \"$FACTORY_AGENT_PROFILE\"",
@@ -57,9 +57,9 @@
       "path": ".",
       "toolchain": [
         "~/.gitconfig",
-        "server/tools/ticket_readiness.py",
-        "docs/operations/readiness/workflow-causes.json",
-        ".cache/server/build/factory-server"
+        "~/software-factory/server/tools/ticket_readiness.py",
+        "~/software-factory/docs/operations/readiness/workflow-causes.json",
+        "~/software-factory/.cache/server/build/factory-server"
       ],
       "start_preflight": {
         "command": "python3 server/tools/ticket_readiness.py check --registry docs/operations/readiness/workflow-causes.json --output .factory/readiness-check.json --captures .factory/readiness-probes --ticket \"$FACTORY_TICKET_ID\" --workspace \"$FACTORY_WORKSPACE\" --profile \"$FACTORY_AGENT_PROFILE\"",
