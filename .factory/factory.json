@@ -1,0 +1,172 @@
+{
+  "factory": "0.1",
+  "workspaces": {
+    "factory-server": {
+      "path": "server",
+      "build": "cd server && ./build.sh build",
+      "gate": "cd server && python3 tools/tier_gate.py",
+      "review": "FACTORY_REVIEW_DRIVER=claude FACTORY_REVIEW_MODEL=claude-opus-5 sh .claude/scripts/review.sh",
+      "toolchain": [
+        "~/.gitconfig",
+        "~/.local/bin",
+        "~/.local/lib",
+        "~/.nvm",
+        "/opt/google/chrome",
+        "server/tools/ticket_readiness.py",
+        "docs/operations/readiness/workflow-causes.json",
+        ".cache/server/build/factory-server"
+      ],
+      "start_preflight": {
+        "command": "python3 server/tools/ticket_readiness.py check --registry docs/operations/readiness/workflow-causes.json --output .factory/readiness-check.json --captures .factory/readiness-probes --ticket \"$FACTORY_TICKET_ID\" --workspace \"$FACTORY_WORKSPACE\" --profile \"$FACTORY_AGENT_PROFILE\"",
+        "timeout_seconds": 45,
+        "exempt_ticket_ids": [
+          "SRV-FEAT-562",
+          "SRV-FEAT-573",
+          "SRV-FEAT-574",
+          "SRV-FIX-586",
+          "SRV-FEAT-593"
+        ]
+      }
+    },
+    "factory-client": {
+      "path": "client/web",
+      "build": "cd client/web && npm run build",
+      "gate": "cd client/web && npm run test",
+      "review": "FACTORY_REVIEW_DRIVER=claude FACTORY_REVIEW_MODEL=claude-opus-5 sh .claude/scripts/review.sh",
+      "toolchain": [
+        "~/.nvm",
+        "~/.gitconfig",
+        "/opt/google/chrome",
+        "server/tools/ticket_readiness.py",
+        "docs/operations/readiness/workflow-causes.json",
+        ".cache/server/build/factory-server"
+      ],
+      "start_preflight": {
+        "command": "python3 server/tools/ticket_readiness.py check --registry docs/operations/readiness/workflow-causes.json --output .factory/readiness-check.json --captures .factory/readiness-probes --ticket \"$FACTORY_TICKET_ID\" --workspace \"$FACTORY_WORKSPACE\" --profile \"$FACTORY_AGENT_PROFILE\"",
+        "timeout_seconds": 45,
+        "exempt_ticket_ids": [
+          "SRV-FEAT-562",
+          "SRV-FEAT-573",
+          "SRV-FEAT-574",
+          "SRV-FIX-586",
+          "SRV-FEAT-593"
+        ]
+      }
+    },
+    "factory": {
+      "path": ".",
+      "toolchain": [
+        "~/.gitconfig",
+        "server/tools/ticket_readiness.py",
+        "docs/operations/readiness/workflow-causes.json",
+        ".cache/server/build/factory-server"
+      ],
+      "start_preflight": {
+        "command": "python3 server/tools/ticket_readiness.py check --registry docs/operations/readiness/workflow-causes.json --output .factory/readiness-check.json --captures .factory/readiness-probes --ticket \"$FACTORY_TICKET_ID\" --workspace \"$FACTORY_WORKSPACE\" --profile \"$FACTORY_AGENT_PROFILE\"",
+        "timeout_seconds": 45,
+        "exempt_ticket_ids": [
+          "SRV-FEAT-562",
+          "SRV-FEAT-573",
+          "SRV-FEAT-574",
+          "SRV-FIX-586",
+          "SRV-FEAT-593"
+        ]
+      }
+    }
+  },
+  "lanes": {
+    "host": 10
+  },
+  "docs": {
+    "epics": "docs/epics",
+    "tickets": "docs/tickets",
+    "reports": "docs/reports",
+    "wiki": "docs/technical",
+    "escapes": "docs/operations/ESCAPES.md"
+  },
+  "stages": [
+    "SPEC",
+    "TEST",
+    "IMPL",
+    "CONVENTION",
+    "BUILD",
+    "GATE",
+    "REVIEW",
+    "QA",
+    "MERGE",
+    "VERIFY"
+  ],
+  "status": {
+    "in_flight": [
+      "in-progress",
+      "awaiting-qa"
+    ],
+    "done": [
+      "pass"
+    ]
+  },
+  "display": {
+    "ticket_fields": [
+      "contract",
+      "seams",
+      "parent",
+      "escaped_from"
+    ]
+  },
+  "evidence": {
+    "line_prefix": "Evidence:",
+    "frozen_after": "TEST"
+  },
+  "roles": {
+    "qa": {
+      "start_on_stage": "QA",
+      "lane": "new",
+      "prompt_file": ".factory/prompts/qa-ticket.md",
+      "effort": "high"
+    }
+  },
+  "run_effort": "high",
+  "default_agent": "claude",
+  "agents": {
+    "claude": {
+      "driver": "claude",
+      "command": "claude",
+      "models": [
+        "claude-opus-5"
+      ],
+      "default_model": "claude-opus-5",
+      "credentials_dir": "~/.claude",
+      "start_prompt_file": ".factory/prompts/run-ticket.md",
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high"
+    }
+  },
+  "trees": {
+    "full": {
+      "decider": "rules",
+      "agents": [
+        "advisor",
+        "worker",
+        "explorer",
+        "researcher"
+      ]
+    },
+    "lean": {
+      "decider": "rules",
+      "agents": [
+        "advisor"
+      ]
+    },
+    "off": {
+      "decider": "rules",
+      "agents": []
+    }
+  },
+  "default_tree": "full"
+}

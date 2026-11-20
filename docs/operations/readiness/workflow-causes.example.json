@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "causes": [
+    {
+      "id": "codex-tool-host-unreachable",
+      "scope": {
+        "workspaces": [
+          "factory-server",
+          "factory-client"
+        ],
+        "profiles": [
+          "codex"
+        ]
+      },
+      "fix_tickets": [
+        "SRV-FIX-560"
+      ],
+      "probes": [
+        {
+          "argv": [
+            "/bin/sh",
+            "-c",
+            "test -x /factory/bin/codex-code-mode-host"
+          ],
+          "timeout_seconds": 2
+        }
+      ],
+      "evidence": [
+        "docs/reports/SRV-FEAT-558/SRV-FEAT-558-live-codex-2026-10-02.log"
+      ],
+      "incidents": [
+        "SRV-FEAT-558"
+      ],
+      "status": "open"
+    }
+  ]
+}
