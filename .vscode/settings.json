@@ -1,0 +1,10 @@
+{
+  "cmake.sourceDirectory": "${workspaceFolder}/server",
+  "cmake.buildDirectory": "${workspaceFolder}/.cache/server/build",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/*.tsbuildinfo": true,
+    ".cache": true
+  }
+}
