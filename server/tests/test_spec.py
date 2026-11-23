@@ -72,7 +72,7 @@ ASSIGN = re.compile(r'errorCode\s*=(?!=)\s*([^;]*);', re.S)
 # A literal error body, raw (`R"({"error":{"code":"x"`) or escaped (`"{\"error\":{\"code\":\"x\"`).
 ENVELOPE = re.compile(r'\\?"error\\?"\s*:\s*\{\s*\\?"code\\?"\s*:\s*\\?"([a-z_]+)\\?"')
 LITERAL = re.compile(r'"([a-z_]+)"')
-FACTORY = re.compile(
+FUNCTION_START = re.compile(
     r'^[ \t]*(?:[A-Za-z_][\w:<>,]*[ \t*&]+)+'
     r'([A-Za-z_][\w:]*)\s*\(((?:[^()]|\([^()]*\))*)\)\s*\{(.*?)^\}', re.S | re.M)
 ENVELOPE_CODE = re.compile(
@@ -83,7 +83,7 @@ ENVELOPE_CODE = re.compile(
 def code_factories(sources):
     found = set()
     for path, text in sources:
-        for factory in FACTORY.finditer(text):
+        for factory in FUNCTION_START.finditer(text):
             name, arguments, body = factory.groups()
             emitted = ENVELOPE_CODE.search(body)
             if not emitted:
@@ -115,7 +115,7 @@ def error_codes():
         for match in ENVELOPE.finditer(text):
             line = text[:match.start()].count("\n") + 1
             found.setdefault(match.group(1), []).append(f"{path.relative_to(SERVER)}:{line}")
-        functions = list(FACTORY.finditer(text))
+        functions = list(FUNCTION_START.finditer(text))
         for defined_at, name, position in sorted(factories):
             names = {name, name.split('::')[-1]}
             for called_as in sorted(names):

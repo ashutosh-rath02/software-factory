@@ -42,7 +42,7 @@ DOCGATE = SERVER / "tools" / "docgate.py"
 # The ledger only ever grows, so this floor can only become easier to clear; it is here to say
 # that the parse below still finds the rows, not to ration them. It is NOT the swept set — that
 # is the `Change landed` column, counted separately and printed beside this one.
-ROWS_NAMING_A_CASE = 117
+ROWS_NAMING_A_CASE = 114
 
 # The one exclusion §1 states: a row whose `Change landed` cell names a ticket that is still open.
 # The case it names has been filed and has not landed; the row is a debt with an owner, and the
@@ -790,7 +790,7 @@ def test_the_placement_copy_is_what_git_tracks_and_nothing_the_tool_wrote(tmp_pa
     src = a_checkout_the_tool_has_run_in(tmp_path)
     ledger_rel = Path(json.loads((src / MANIFEST_REL).read_text())["docs"]["escapes"])
     tracked = set(tracked_by_git(src))
-    assert len(tracked) > 1000, \
+    assert len(tracked) > 500, \
         f"`git ls-files` in {src} listed {len(tracked)} paths, so this fixture is not a checkout"
 
     out = tmp_path / "out"

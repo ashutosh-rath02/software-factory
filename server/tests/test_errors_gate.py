@@ -81,7 +81,7 @@ def test_new_factory_name_and_alias_return_type_preserve_real_coverage(refusals,
     shutil.copytree(test_spec.APP, copied)
     source = copied / 'api/routing.cpp'
     text = source.read_text()
-    factory = next(match[0] for match in test_spec.FACTORY.finditer(text)
+    factory = next(match[0] for match in test_spec.FUNCTION_START.finditer(text)
                    if match[1] == 'api::Routing::error')
     new_factory = factory.replace('http::Response api::Routing::error',
                                   'SourceCopyResponse source_copy_refusal', 1)
